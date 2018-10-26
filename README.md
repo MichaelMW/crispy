@@ -1,4 +1,5 @@
-# Crispy v1.2
+# Crispy
+A lightweight versatile pipeline for crispr-screening analysis.
 
 
 -- run ./demo.sh to check if the pipeline works
