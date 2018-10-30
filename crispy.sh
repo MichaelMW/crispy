@@ -57,26 +57,27 @@ echo "######### read counts -> sgRNA signals ... #########"
 ## sgRNA -> sgRNA signals in loci
 #echo "######### getting sgRNA signal from pvalues ... #########"
 pvalTsv="$OUTDIR/$PREFIX.pvalues.tsv"  # from last step
-signalBed="$OUTDIR/$PREFIX.pvalues.bed" # output of this step, good for visualizing all sgRNA signals.
+sgrnaSignal="$OUTDIR/$PREFIX.pvalues.bedgraph" # output of this step, good for visualizing all sgRNA signals.
 if [ "$DIRECTION" -eq 1 ]; then
 	echo "DIRECTION==1, using only enriched sgRNA ..."
-	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2>0){print $1, -log($4)}' > tmp1
+	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2>0){print $1, -log($5)}}' > tmp1
 elif [ "$DIRECTION" -eq -1 ]; then
 	echo "DIRECTION==-1, using only depleted sgRNA ..."
-	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2<0){print $1, log($4)}}' > tmp1
+	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2<0){print $1, log($5)}}' > tmp1
 else
 	echo "DIRECTION==0, using sgRNAs in both directions ..."
-	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff){print $1, -log($4) * (($2>0)-0.5)*2}}' > tmp1
+	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff){print $1, -log($5) * (($2>0)-0.5)*2}}' > tmp1
 fi
 awk '{print $4"\t"$1"_"$2"_"$3}' $INSGRNA > tmp2
-./bin/rp tmp1 tmp2 | tr "_" "\t" > $signalBed
+./bin/rp tmp1 tmp2 | tr "_" "\t" > $sgrnaSignal
+rm -rf tmp1 tmp2
 echo
 
 ## sgRNA signals -> ranks
 echo "######### sgRNA signals -> target region signals ... #########"
 #echo "######### converting sgRNA signals to ranks ... #########"
 rankBed="$OUTDIR/$PREFIX.rank.bed" #
-paste -d"\t" <(cut -f1-3 $signalBed) <(cut -f4 $signalBed| ./bin/val2rank.py -n) > $rankBed
+paste -d"\t" <(cut -f1-3 $sgrnaSignal) <(cut -f4 $sgrnaSignal| ./bin/val2rank.py -n) > $rankBed
 
 # ranks -> put in defined regions
 #echo "######### intersecting sgRNA ranks with target regions ... #########"
