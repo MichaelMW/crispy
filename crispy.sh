@@ -12,6 +12,7 @@ command -v bedtools >/dev/null 2>&1 || { echo "bedtools not found. Try this page
 OUTDIR="crispyOUT"
 PREFIX="results"
 NBCUTOFF=0.05
+DIRECTION=0
 RRACUTOFF=1
 PEAKCUTOFF=2
 MINLEN=50
@@ -21,7 +22,7 @@ MAXGAP=200
 SGRNAKW="test"  ## keywords used to grep from sgRNA for the designed ones. 
 
 ## Get arguments
-while getopts ":i:r:s:o:p:b:f:n:a:c:l:g" opt;
+while getopts ":i:r:s:o:p:b:f:n:d:a:c:l:g" opt;
 do
 	case "$opt" in
 		i) INREAD=$OPTARG;; 	# input read number for each sgRNA. (id name should match $INSGRNA)
@@ -32,6 +33,7 @@ do
 		b) BG=$OPTARG;; 		# background column names. eg. "unsortedRep1,unsortedRep2"
 		f) FG=$OPTARG;; 		# foreground column names. eg. "gpf+mcherry-,gpf-mcherry+"
 		n) NBCUTOFF=$OPTARG;;  	# pval cutoff for sgRNA using negative bionomial test. Default=0.05.
+		d) DIRECTION=$OPTARG;; 	# set to 1 to get only enriched sgRNA in fg. -1 for only depleted sgRNA. 0 for both. Default=0
 		a) RRACUTOFF=$OPTARG;;  # pval cutoff for crest-seq signal in defined region using robust ranking aggregation test. Default=1.
 		c) PEAKCUTOFF=$OPTARG;; # pval cutoff for final peaks from macs2. Default=2. (2 means 1e-2, ie, 0.01)
 		l) MINLEN=$OPTARG;; 	# min length of final peaks from macs2. Default=50.
@@ -43,6 +45,11 @@ done
 
 ## Check arguments
 
+
+## start run
+echo "CRISPY started runing ..."
+echo "./crispy $@"
+
 ## reads -> sgRNA
 echo "######### read counts -> sgRNA signals ... #########"
 ./bin/call.gRNA.R --inFile=$INREAD --bg="$BG" --fg="$FG" --outDir="$OUTDIR" --prefix="$PREFIX"
@@ -51,10 +58,18 @@ echo "######### read counts -> sgRNA signals ... #########"
 #echo "######### getting sgRNA signal from pvalues ... #########"
 pvalTsv="$OUTDIR/$PREFIX.pvalues.tsv"  # from last step
 signalBed="$OUTDIR/$PREFIX.pvalues.bed" # output of this step, good for visualizing all sgRNA signals.
-./bin/rp <(tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff){print $1,-log($4)*(($2>0)-0.5)*2}}') \
-    <(awk '{print $4"\t"$1"_"$2"_"$3}' $INSGRNA) \
-    | tr "_" "\t" \
-    > $signalBed 
+if [ "$DIRECTION" -eq 1 ]; then
+	echo "DIRECTION==1, using only enriched sgRNA ..."
+	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2>0){print $1, -log($4)}' > tmp1
+elif [ "$DIRECTION" -eq -1 ]; then
+	echo "DIRECTION==-1, using only depleted sgRNA ..."
+	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2<0){print $1, log($4)}}' > tmp1
+else
+	echo "DIRECTION==0, using sgRNAs in both directions ..."
+	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff){print $1, -log($4) * (($2>0)-0.5)*2}}' > tmp1
+fi
+awk '{print $4"\t"$1"_"$2"_"$3}' $INSGRNA > tmp2
+./bin/rp tmp1 tmp2 | tr "_" "\t" > $signalBed
 echo
 
 ## sgRNA signals -> ranks
@@ -85,4 +100,6 @@ subtractBed -a $INREGION -b $rraBed | awk '{print $0"\t"0}' | cat - $rraBed | ./
 peakFile="$OUTDIR/$PREFIX.peaks.bedgraph"
 macs2 bdgpeakcall -i $rraBed -l $MINLEN -g $MAXGAP -c $PEAKCUTOFF -o /dev/stdout | tail -n+2 | cut -f1-3,10 > $peakFile
 echo "Crispy Done!"
+echo
+echo
 echo

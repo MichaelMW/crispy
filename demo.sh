@@ -7,7 +7,7 @@
 ## -c higher is more stringent. 3 means 0.001 peaks filter in macs2. Lower this value down to 0+ to get more peaks. 
 
 ## demo1, Yarui, 2017 nature method paper. 
-# loose
+# loose pvalue cut off; call both enriched and depleted sgRNA (default)
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
@@ -15,11 +15,12 @@
             -p "cis_loose" \
             -b "ctr1,ctr2" \
             -f "cis1,cis2,cis3,cis4,cis5" \
+			-d 0 \
            	-n 0.1 \
            	-c 1
 
 ## demo2
-# stringent
+# stringent pvalue cutoff; call only enriched sgRNA
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
@@ -27,6 +28,7 @@
             -p "cis_stringent" \
             -b "ctr1,ctr2" \
             -f "cis1,cis2,cis3,cis4,cis5" \
+			-d 1
            	-n 0.05 \
            	-c 3
 
