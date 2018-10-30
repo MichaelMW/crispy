@@ -18,6 +18,7 @@
            	-n 0.1 \
            	-c 1
 
+## demo2
 # stringent
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
@@ -29,6 +30,7 @@
            	-n 0.05 \
            	-c 3
 
+## demo3
 # no replicate mode
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \

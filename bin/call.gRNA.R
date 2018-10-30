@@ -73,7 +73,7 @@ cat(message)
 
 # check on rep
 hasRep = 1
-if(length(fgs)==1 || length(bgs)==1){
+if(length(unlist(fgs))==1 || length(unlist(bgs))==1){
   hasRep = 0
   cat("#### Warning: ####\nno biological replicates provided, using pooled fg/bg for dispersion estimation\nFor details, checkout estimateGLMCommonDisp in edgeR.\n\n")
 }

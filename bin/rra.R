@@ -48,6 +48,6 @@ mat2 <- apply(mat, 2, as.numeric)
 rownames(mat2) = loci
 ################ run rra ##############
 results <- aggregateRanks(rmat = mat2, method = "RRA")
-colnames(results)
+#colnames(results)
 results <- subset(results, Score<1)
 write.table(format(results,digits =4), file=outFile, quote=FALSE, sep='\t', row.names = F)

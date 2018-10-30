@@ -43,27 +43,28 @@ done
 
 ## Check arguments
 
-
 ## reads -> sgRNA
-echo "calling sgRNA ..."
+echo "######### read counts -> sgRNA signals ... #########"
 ./bin/call.gRNA.R --inFile=$INREAD --bg="$BG" --fg="$FG" --outDir="$OUTDIR" --prefix="$PREFIX"
 
 ## sgRNA -> sgRNA signals in loci
-echo "getting sgRNA signal from pvalues ..."
+#echo "######### getting sgRNA signal from pvalues ... #########"
 pvalTsv="$OUTDIR/$PREFIX.pvalues.tsv"  # from last step
 signalBed="$OUTDIR/$PREFIX.pvalues.bed" # output of this step, good for visualizing all sgRNA signals.
 ./bin/rp <(tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff){print $1,-log($4)*(($2>0)-0.5)*2}}') \
     <(awk '{print $4"\t"$1"_"$2"_"$3}' $INSGRNA) \
     | tr "_" "\t" \
     > $signalBed 
+echo
 
 ## sgRNA signals -> ranks
-echo "converting sgRNA signals to ranks ..."	
+echo "######### sgRNA signals -> target region signals ... #########"
+#echo "######### converting sgRNA signals to ranks ... #########"
 rankBed="$OUTDIR/$PREFIX.rank.bed" #
 paste -d"\t" <(cut -f1-3 $signalBed) <(cut -f4 $signalBed| ./bin/val2rank.py -n) > $rankBed
 
 # ranks -> put in defined regions
-echo "intersecting sgRNA ranks with target regions ..."
+#echo "######### intersecting sgRNA ranks with target regions ... #########"
 rankBinBed="$OUTDIR/$PREFIX.rankBin.bed"
 intersectBed -a $INREGION -b $rankBed -wa -wb | ./bin/collapseBed -c 7 -o "list" -q  > $rankBinBed
 
@@ -74,11 +75,14 @@ rraFile="$OUTDIR/$PREFIX.rra.tsv"
 # convert and filter rankFile to rankBed 
 rraBed="$OUTDIR/$PREFIX.rra.bedgraph"
 tail -n+2 $rraFile | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v OFS="\t" '{if($4<RRACUTOFF){$4=-log($4); print}}' | ./bin/mySortBed > $rraBed
+echo 
 
 ## macs2 for peak smoothing
+echo "######### target region signals -> peak smoothing ... #########"
 ## fill 0s for macs2
 subtractBed -a $INREGION -b $rraBed | awk '{print $0"\t"0}' | cat - $rraBed | ./bin/mySortBed > tmp; mv tmp $rraBed
 ## call peaks
 peakFile="$OUTDIR/$PREFIX.peaks.bedgraph"
 macs2 bdgpeakcall -i $rraBed -l $MINLEN -g $MAXGAP -c $PEAKCUTOFF -o /dev/stdout | tail -n+2 | cut -f1-3,10 > $peakFile
 echo "Crispy Done!"
+echo
