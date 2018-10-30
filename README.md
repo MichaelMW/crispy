@@ -1,15 +1,19 @@
 # Crispy
 A lightweight versatile pipeline for crispr-screening analysis.
 
+## Demo
 
--- run ./demo.sh to check if the pipeline works
+* run `./demo.sh` to check if the pipeline works
 
--- read moreExample.sh for optimal parameters for your experiments. 
+## More Examples
+* read `moreExample.sh` for optimal parameters for your experiments. 
 
--- to generate read count table as input for crispy.sh, checkout counter/counter.demo.sh
+## Read Counts
+* to generate read count table as input for `crispy.sh`, checkout `counter/counter.demo.sh`
+* run `counter/counter.py -h`
 
-it's not fully automated yet, but should work when emulated. 
-
-run:
-counter/counter.py -h 
-for more details on the counter. 
+## Todos
+* Check on depletion vs enrichment
+* Quantile normalization
+* PCA
+* automate read counts (low)
