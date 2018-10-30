@@ -56,8 +56,8 @@ echo "######### read counts -> sgRNA signals ... #########"
 
 ## sgRNA -> sgRNA signals in loci
 #echo "######### getting sgRNA signal from pvalues ... #########"
-pvalTsv="$OUTDIR/$PREFIX.pvalues.tsv"  # from last step
-sgrnaSignal="$OUTDIR/$PREFIX.pvalues.bedgraph" # output of this step, good for visualizing all sgRNA signals.
+pvalTsv="$OUTDIR/$PREFIX.sgRNA.tsv"  # from last step
+sgrnaSignal="$OUTDIR/$PREFIX.sgRNA.bedgraph" # output of this step, good for visualizing all sgRNA signals.
 if [ "$DIRECTION" -eq 1 ]; then
 	echo "DIRECTION==1, using only enriched sgRNA ..."
 	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2>0){print $1, -log($5)}}' > tmp1
@@ -85,21 +85,21 @@ rankBinBed="$OUTDIR/$PREFIX.rankBin.bed"
 intersectBed -a $INREGION -b $rankBed -wa -wb | ./bin/collapseBed -c 7 -o "list" -q  > $rankBinBed
 
 # rra in defined regions
-rraFile="$OUTDIR/$PREFIX.rra.tsv"
-./bin/rra.R --inFile=$rankBinBed --outFile=$rraFile
+regionFile="$OUTDIR/$PREFIX.region.tsv"
+./bin/rra.R --inFile=$rankBinBed --outFile=$regionFile
 
 # convert and filter rankFile to rankBed 
-rraBed="$OUTDIR/$PREFIX.rra.bedgraph"
-tail -n+2 $rraFile | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v OFS="\t" '{if($4<RRACUTOFF){$4=-log($4); print}}' | ./bin/mySortBed > $rraBed
+regionSignal="$OUTDIR/$PREFIX.region.bedgraph"
+tail -n+2 $regionFile | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v OFS="\t" '{if($4<RRACUTOFF){$4=-log($4); print}}' | ./bin/mySortBed > $regionSignal
 echo 
 
 ## macs2 for peak smoothing
 echo "######### target region signals -> peak smoothing ... #########"
 ## fill 0s for macs2
-subtractBed -a $INREGION -b $rraBed | awk '{print $0"\t"0}' | cat - $rraBed | ./bin/mySortBed > tmp; mv tmp $rraBed
+subtractBed -a $INREGION -b $regionSignal | awk '{print $0"\t"0}' | cat - $regionSignal | ./bin/mySortBed > tmp; mv tmp $regionSignal
 ## call peaks
-peakFile="$OUTDIR/$PREFIX.peaks.bedgraph"
-macs2 bdgpeakcall -i $rraBed -l $MINLEN -g $MAXGAP -c $PEAKCUTOFF -o /dev/stdout | tail -n+2 | cut -f1-3,10 > $peakFile
+peakSignal="$OUTDIR/$PREFIX.peak.bedgraph"
+macs2 bdgpeakcall -i $regionSignal -l $MINLEN -g $MAXGAP -c $PEAKCUTOFF -o /dev/stdout | tail -n+2 | cut -f1-3,10 > $peakSignal
 echo "Crispy Done!"
 echo
 echo

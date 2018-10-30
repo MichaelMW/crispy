@@ -104,7 +104,7 @@ rownames(tab) = dat[,1]
 ## preview and output
 cat("preview top results:\n")
 topTags(results)
-outTsv=paste0(outDir, "/", paste0(prefix, ".pvalues.tsv"))
+outTsv=paste0(outDir, "/", paste0(prefix, ".sgRNA.tsv"))
 write.table(format(tab,digits =4), file=outTsv, quote=FALSE, sep='\t')
 
 ## plotting QC
