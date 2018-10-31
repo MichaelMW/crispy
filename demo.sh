@@ -36,7 +36,7 @@ rm -rf "results.Yarui"
            	-c 3
 
 ## demo3
-# no replicate mode; call only depleted sgRNA
+# no replicate mode; call only depleted sgRNA; use method=min
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
@@ -45,4 +45,5 @@ rm -rf "results.Yarui"
             -b "ctr1" \
             -f "cis1" \
 			-d -1 \
+			-m "min"
 

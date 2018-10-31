@@ -20,10 +20,11 @@ if("--help" %in% args) {
       Arguments:
       --inFile=[inFile of regions with comma separated ranked values (0-1). ]
       --outFile=[outFile]
+	  --method=[RRA,min,geom.mean,median,stuart], default:RRA
       --help
 
       Example:
-      RRA.R --inFile=sox2.binRank.tsv --outFile=ranked.tsv \n")
+      RRA.R --inFile=sox2.binRank.tsv --outFile=ranked.tsv --method=RRA\n")
   q(save="no")
 }
 
@@ -33,9 +34,11 @@ argsL <- as.list(as.character(argsDF$V2))
 names(argsL) <- argsDF$V1
 inFile = argsL$inFile
 outFile = argsL$outFile
+method = argsL$method
 
-#inFile = "FMR1.AFF2/++.rankBin.bed"
-#outFile="ranking.tsv"
+if(is.null(argsL$method)) {
+  method = "RRA"
+  }
 
 ################ read and convert data #############
 dat = read.table(inFile)
@@ -47,7 +50,6 @@ mat <- as.matrix(df, nrow = 10)
 mat2 <- apply(mat, 2, as.numeric)
 rownames(mat2) = loci
 ################ run rra ##############
-results <- aggregateRanks(rmat = mat2, method = "RRA")
-#colnames(results)
+results <- aggregateRanks(rmat = mat2, method = method)
 results <- subset(results, Score<1)
 write.table(format(results,digits =4), file=outFile, quote=FALSE, sep='\t', row.names = F)
