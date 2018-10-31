@@ -60,7 +60,7 @@ pvalTsv="$OUTDIR/$PREFIX.sgRNA.tsv"  # from last step
 sgrnaSignal="$OUTDIR/$PREFIX.sgRNA.bedgraph" # output of this step, good for visualizing all sgRNA signals.
 if [ "$DIRECTION" -eq -1 ]; then
 	echo "DIRECTION==-1, using only depleted sgRNA ..."
-	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2<0){print $1, log($5)}}' > tmp1
+	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2<0){print $1, -log($5)}}' > tmp1
 else
 	echo "DIRECTION==1, using only enriched sgRNA ..."
 	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2>0){print $1, -log($5)}}' > tmp1
