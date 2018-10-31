@@ -72,19 +72,10 @@ echo
 
 ## sgRNA signals -> target region signals
 echo "######### 2. sgRNA signals -> target region signals ... #########"
-
-# neg/depleted sgRNA only
-if [ "$DIRECTION" -eq -1 ]; then
-	paste -d"\t" <(cut -f1-3 $sgrnaSignal) <(cut -f4 $sgrnaSignal| awk '{if($1>0){$1=0};print -$1}' | ./bin/val2rank.py -n) > tmp1
-# pos/enriched sgRNA only
-else
-	paste -d"\t" <(cut -f1-3 $sgrnaSignal) <(cut -f4 $sgrnaSignal| awk '{if($1<0){$1=0};print $1}' | ./bin/val2rank.py -n) > tmp1
-fi
-
+paste -d"\t" <(cut -f1-3 $sgrnaSignal) <(cut -f4 $sgrnaSignal| awk '{if($1<0){$1=0};print $1}' | ./bin/val2rank.py -n) > tmp1
 # put sgRNA ranks into region bins
 intersectBed -a $INREGION -b tmp1 -wa -wb | ./bin/collapseBed -c 7 -o "list" -q  > tmp2
 ./bin/rra.R --inFile="tmp2" --outFile="tmp3"
-
 # convert and filter pvalues of region bins to signals. 
 regionSignal="$OUTDIR/$PREFIX.region.bedgraph"
 tail -n+2 tmp3 | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v OFS="\t" '{if($4<RRACUTOFF){$4=-log($4); print}}' | ./bin/mySortBed > $regionSignal
@@ -92,13 +83,10 @@ rm -rf tmp1 tmp2 tmp3
 echo 
 
 ## macs2 for peak smoothing
-echo "######### target region signals -> peak smoothing ... #########"
+echo "######### 3. target region signals -> peak smoothing ... #########"
 ## fill 0s for macs2
 subtractBed -a $INREGION -b $regionSignal | awk '{print $0"\t"0}' | cat - $regionSignal | ./bin/mySortBed > tmp; mv tmp $regionSignal
 ## call peaks
 peakSignal="$OUTDIR/$PREFIX.peak.bedgraph"
 macs2 bdgpeakcall -i $regionSignal -l $MINLEN -g $MAXGAP -c $PEAKCUTOFF -o /dev/stdout | tail -n+2 | cut -f1-3,10 > $peakSignal
-echo "Crispy Done!"
-echo
-echo
-echo
+echo -e "Crispy Done!\n\n\n"

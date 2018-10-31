@@ -6,6 +6,9 @@
 ## -a is rra peaks. Crispy default is use 1 to keep all (recommended). 
 ## -c higher is more stringent. 3 means 0.001 peaks filter in macs2. Lower this value down to 0+ to get more peaks. 
 
+
+rm -rf "results.Yarui"
+
 ## demo1, Yarui, 2017 nature method paper. 
 # loose pvalue cut off; call only enriched sgRNA
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
