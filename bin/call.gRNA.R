@@ -79,9 +79,6 @@ message = paste("using infile = ", inFile, "\n",
                sep ="")
 cat(message)
 
-
-
-
 ################## Building gRNA model ##################### 
 # #debug
 # setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -111,21 +108,20 @@ library(ggfortify)
 X <- dat[,2:(dim(dat)[2]-1)]
 #pca1
 ppca1 <- autoplot(prcomp(X), data=dat, colour = "Group",
-         loadings = T, 
+         loadings = T,
          loadings.colour = 'blue', 
          loadings.label = T) + theme_classic()
 #pca2
 tDat <- as.data.frame(t(dat))
-rownames(tDat)
 tX <- data.matrix(tDat[2:(dim(tDat)[1]-1),])
 ppca2 <- autoplot(prcomp(tX), label = TRUE, shape = FALSE) + theme_classic()
 # plot
+library(gridExtra)
 outPdf = paste0(outDir, "/", paste0(prefix, ".PCA.pdf"))
 cat(paste0("plot PCA file = ", outPdf,"\n"))
 pdf(outPdf, width = 7, height = 10)
 grid.arrange(ppca1, ppca2, nrow = 2)
 dev.off()
-
 
 # quantile normalization of reads
 library(preprocessCore)
@@ -172,7 +168,6 @@ write.table(format(tab,digits =4), file=outTsv, quote=FALSE, sep='\t')
 
 ## plotting QC
 library(ggplot2)
-library(gridExtra)
 outPdf = paste0(outDir, "/", paste0(prefix, ".qc.pdf"))
 cat(paste0("plot QC file = ", outPdf,"\n"))
 pdf(outPdf, width = 7, height = 10)
