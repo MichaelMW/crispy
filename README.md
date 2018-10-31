@@ -14,11 +14,7 @@ A lightweight versatile pipeline for crispr-screening analysis.
 
 ## Todos
 * discrepency between regions and peaks. (optimize macs2 parameters.)
-* Check on depletion vs enrichment (done)
-* Quantile normalization
-* PCA
-* automate read counts (low)
-
+* automate read counts and QC
 
 ## history
 * v1.3:
@@ -26,6 +22,7 @@ A lightweight versatile pipeline for crispr-screening analysis.
 	* added support for aggregation methods (use -m [RRA, min,geom.mean,median,stuart]. Default=RRA)
 	* added support for quantile normalization within fgs and bgs. (use -q flag. Defualt=False if not specified.)
 	* bug fix
+	* removed cluttered output files. Each run now have sgRNA signals, region signals and final peak signals. 
 
 * v1.2:
 	* Counter template included. 
