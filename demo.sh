@@ -38,10 +38,8 @@
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
             -o results.Yarui \
-            -p "cis_stringent_noRep" \
+            -p "cis_noRep_depletion" \
             -b "ctr1" \
             -f "cis1" \
 			-d -1 \
-            -n 0.05 \
-            -c 3
 
