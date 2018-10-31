@@ -12,7 +12,7 @@ command -v bedtools >/dev/null 2>&1 || { echo "bedtools not found. Try this page
 OUTDIR="crispyOUT"
 PREFIX="results"
 NBCUTOFF=0.05
-DIRECTION=0
+DIRECTION=1
 RRACUTOFF=1
 PEAKCUTOFF=2
 MINLEN=50
@@ -33,7 +33,7 @@ do
 		b) BG=$OPTARG;; 		# background column names. eg. "unsortedRep1,unsortedRep2"
 		f) FG=$OPTARG;; 		# foreground column names. eg. "gpf+mcherry-,gpf-mcherry+"
 		n) NBCUTOFF=$OPTARG;;  	# pval cutoff for sgRNA using negative bionomial test. Default=0.05.
-		d) DIRECTION=$OPTARG;; 	# set to 1 to get only enriched sgRNA in fg. -1 for only depleted sgRNA. 0 for both. Default=0
+		d) DIRECTION=$OPTARG;; 	# set to 1 to get only enriched sgRNA in fg. -1 for only depleted sgRNA. Default=1.
 		a) RRACUTOFF=$OPTARG;;  # pval cutoff for crest-seq signal in defined region using robust ranking aggregation test. Default=1.
 		c) PEAKCUTOFF=$OPTARG;; # pval cutoff for final peaks from macs2. Default=2. (2 means 1e-2, ie, 0.01)
 		l) MINLEN=$OPTARG;; 	# min length of final peaks from macs2. Default=50.
@@ -51,46 +51,44 @@ echo "CRISPY started runing ..."
 echo "./crispy $@"
 
 ## reads -> sgRNA
-echo "######### read counts -> sgRNA signals ... #########"
+echo "######### 1. read counts -> sgRNA signals ... #########"
 ./bin/call.gRNA.R --inFile=$INREAD --bg="$BG" --fg="$FG" --outDir="$OUTDIR" --prefix="$PREFIX"
 
 ## sgRNA -> sgRNA signals in loci
 #echo "######### getting sgRNA signal from pvalues ... #########"
 pvalTsv="$OUTDIR/$PREFIX.sgRNA.tsv"  # from last step
 sgrnaSignal="$OUTDIR/$PREFIX.sgRNA.bedgraph" # output of this step, good for visualizing all sgRNA signals.
-if [ "$DIRECTION" -eq 1 ]; then
-	echo "DIRECTION==1, using only enriched sgRNA ..."
-	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2>0){print $1, -log($5)}}' > tmp1
-elif [ "$DIRECTION" -eq -1 ]; then
+if [ "$DIRECTION" -eq -1 ]; then
 	echo "DIRECTION==-1, using only depleted sgRNA ..."
 	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2<0){print $1, log($5)}}' > tmp1
 else
-	echo "DIRECTION==0, using sgRNAs in both directions ..."
-	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff){print $1, -log($5) * (($2>0)-0.5)*2}}' > tmp1
+	echo "DIRECTION==1, using only enriched sgRNA ..."
+	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2>0){print $1, -log($5)}}' > tmp1
 fi
 awk '{print $4"\t"$1"_"$2"_"$3}' $INSGRNA > tmp2
 ./bin/rp tmp1 tmp2 | tr "_" "\t" > $sgrnaSignal
 rm -rf tmp1 tmp2
 echo
 
-## sgRNA signals -> ranks
-echo "######### sgRNA signals -> target region signals ... #########"
-#echo "######### converting sgRNA signals to ranks ... #########"
-rankBed="$OUTDIR/$PREFIX.rank.bed" #
-paste -d"\t" <(cut -f1-3 $sgrnaSignal) <(cut -f4 $sgrnaSignal| ./bin/val2rank.py -n) > $rankBed
+## sgRNA signals -> target region signals
+echo "######### 2. sgRNA signals -> target region signals ... #########"
 
-# ranks -> put in defined regions
-#echo "######### intersecting sgRNA ranks with target regions ... #########"
-rankBinBed="$OUTDIR/$PREFIX.rankBin.bed"
-intersectBed -a $INREGION -b $rankBed -wa -wb | ./bin/collapseBed -c 7 -o "list" -q  > $rankBinBed
+# neg/depleted sgRNA only
+if [ "$DIRECTION" -eq -1 ]; then
+	paste -d"\t" <(cut -f1-3 $sgrnaSignal) <(cut -f4 $sgrnaSignal| awk '{if($1>0){$1=0};print -$1}' | ./bin/val2rank.py -n) > tmp1
+# pos/enriched sgRNA only
+else
+	paste -d"\t" <(cut -f1-3 $sgrnaSignal) <(cut -f4 $sgrnaSignal| awk '{if($1<0){$1=0};print $1}' | ./bin/val2rank.py -n) > tmp1
+fi
 
-# rra in defined regions
-regionFile="$OUTDIR/$PREFIX.region.tsv"
-./bin/rra.R --inFile=$rankBinBed --outFile=$regionFile
+# put sgRNA ranks into region bins
+intersectBed -a $INREGION -b tmp1 -wa -wb | ./bin/collapseBed -c 7 -o "list" -q  > tmp2
+./bin/rra.R --inFile="tmp2" --outFile="tmp3"
 
-# convert and filter rankFile to rankBed 
+# convert and filter pvalues of region bins to signals. 
 regionSignal="$OUTDIR/$PREFIX.region.bedgraph"
-tail -n+2 $regionFile | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v OFS="\t" '{if($4<RRACUTOFF){$4=-log($4); print}}' | ./bin/mySortBed > $regionSignal
+tail -n+2 tmp3 | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v OFS="\t" '{if($4<RRACUTOFF){$4=-log($4); print}}' | ./bin/mySortBed > $regionSignal
+rm -rf tmp1 tmp2 tmp3
 echo 
 
 ## macs2 for peak smoothing
