@@ -11,12 +11,17 @@ if(!("ggplot2" %in% insPacs)){
 if(!("gridExtra" %in% insPacs)){
   install.packages("gridExtra", repos = "http://cran.us.r-project.org")
 }
+if(!("preprocessCore" %in% insPacs)){
+  install.packages("preprocessCore", repos = "http://cran.us.r-project.org")
+}
+if(!("ggfortify" %in% insPacs)){
+  install.packages("ggfortify", repos = "http://cran.us.r-project.org")
+}
 if(!("edgeR" %in% insPacs)){
   source("https://bioconductor.org/biocLite.R")
   biocLite("edgeR")
 }
 
-library(edgeR)
 
 ################## Input args and input. #####################
 args <- commandArgs(TRUE)
@@ -32,12 +37,13 @@ if("--help" %in% args) {
 	--inFile=[inFile.tsv, please include a header]
 	--fg=[colomn names as foreground/test group, eg. 'exp1,exp2']
   --bg=[colomn names as background/control group, eg. 'exp3,exp4']
+  --qnorm=[1 for quantile normalization of reads within fgs and within bgs. default is 0.]
 	--outDir=[name of output dir]
   --prefix=[optional prefix for each file name. eg.'GPF+mCherry-']
 	--help
 
 	Example:
-	call.gRNA.R --inFile='reads.tsv' --fg=exp1,exp2 --bg=exp3,exp4 --outDir='sox2.screen'\n")
+	call.gRNA.R --inFile='reads.tsv' --fg=exp1,exp2 --bg=exp3,exp4 --qnorm=1 --outDir='sox2.screen'\n")
   q(save="no")
 }
 parseArgs <- function(x) strsplit(sub("^--", "", x), "=")
@@ -61,6 +67,7 @@ inFile=argsL$inFile
 fgs = strsplit(argsL$fg,",")
 bgs = strsplit(argsL$bg,",")
 prefix = as.character(argsL$prefix)
+qnorm = as.character(argsL$qnorm)
 outDir=argsL$outDir
 dir.create(file.path(outDir), showWarnings = FALSE)
 message = paste("using infile = ", inFile, "\n",
@@ -68,8 +75,19 @@ message = paste("using infile = ", inFile, "\n",
                "using as bg columns = ", bgs, "\n",
                "output directory to ", outDir, "\n", 
                "prefix:", prefix, "\n",
+               "qnorm:", qnorm,"\n",
                sep ="")
 cat(message)
+
+
+
+
+################## Building gRNA model ##################### 
+# #debug
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+# inFile = "../demos/d1.Yarui/data.tsv"
+# fgs=list("cis1", "cis2", "cis3", "cis4", "cis5")
+# bgs=list("ctr1", "ctr2")
 
 # check on rep
 hasRep = 1
@@ -78,16 +96,61 @@ if(length(unlist(fgs))==1 || length(unlist(bgs))==1){
   cat("#### Warning: ####\nno biological replicates provided, using pooled fg/bg for dispersion estimation\nFor details, checkout estimateGLMCommonDisp in edgeR.\n\n")
 }
 
-
-################## Building gRNA model ##################### 
+# input preprocessing
+library(edgeR)
 dat = read.table(inFile, header = T)
-reads = dat[,c(unlist(fgs), unlist(bgs))]
 status = as.factor(dat[,dim(dat)[2]])
-ncol = dim(reads)[2]
+ncol = length(c(unlist(fgs), unlist(bgs)))
 group = c(rep("fg", length(unlist(fgs))), rep("bg", length(unlist(bgs))))
 design = model.matrix(~group)
-dlist = DGEList(as.matrix(reads))
+reads.fgs = dat[,unlist(fgs)]
+reads.bgs = dat[,unlist(bgs)]
 
+# plot PCA with all reads. 
+library(ggfortify)
+X <- dat[,2:(dim(dat)[2]-1)]
+#pca1
+ppca1 <- autoplot(prcomp(X), data=dat, colour = "Group",
+         loadings = T, 
+         loadings.colour = 'blue', 
+         loadings.label = T) + theme_classic()
+#pca2
+tDat <- as.data.frame(t(dat))
+rownames(tDat)
+tX <- data.matrix(tDat[2:(dim(tDat)[1]-1),])
+ppca2 <- autoplot(prcomp(tX), label = TRUE, shape = FALSE) + theme_classic()
+# plot
+outPdf = paste0(outDir, "/", paste0(prefix, ".PCA.pdf"))
+cat(paste0("plot PCA file = ", outPdf,"\n"))
+pdf(outPdf, width = 7, height = 10)
+grid.arrange(ppca1, ppca2, nrow = 2)
+dev.off()
+
+
+# quantile normalization of reads
+library(preprocessCore)
+qnormFun <- function(df){
+  mat = as.matrix(df)
+  df.qnorm = normalize.quantiles(mat)
+  rownames(df.qnorm) = rownames(df)
+  colnames(df.qnorm) = colnames(df)
+  return(df.qnorm)
+}
+# condition
+if(qnorm=="1"){
+  if(length(unlist(fgs))>1){
+    reads.fgs = qnormFun(reads.fgs)
+    cat("using quantile normalization on foreground ...\n")
+  }
+  if(length(unlist(bgs))>1){
+    reads.bgs = qnormFun(reads.bgs)
+    cat("using quantile normalization on background ...\n")
+  }
+}
+reads = cbind(reads.fgs,reads.bgs)
+
+# negative bionormial test
+dlist = DGEList(as.matrix(reads))
 if(hasRep==1){
   d = estimateDisp(calcNormFactors(dlist), design)
   fit = glmQLFit(d, design, robust=TRUE)
@@ -116,6 +179,7 @@ pdf(outPdf, width = 7, height = 10)
 # fc.vs.cpm
 p1 <- ggplot(tab, aes(x=logCPM,y=logFC)) +
   geom_point(aes(colour = status), size = 1)
+
 # pval.vs.fc
 p2 <- ggplot(tab, aes(x=logFC,y=PValue)) +
   geom_point(aes(colour = status), size = 1)

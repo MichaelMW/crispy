@@ -11,6 +11,7 @@ command -v bedtools >/dev/null 2>&1 || { echo "bedtools not found. Try this page
 ## Default parameters
 OUTDIR="crispyOUT"
 PREFIX="results"
+QNORM="0"
 NBCUTOFF=0.05
 DIRECTION=1
 METHOD="RRA"
@@ -23,7 +24,7 @@ MAXGAP=200
 SGRNAKW="test"  ## keywords used to grep from sgRNA for the designed ones. 
 
 ## Get arguments
-while getopts ":i:r:s:o:p:b:f:n:d:m:a:c:l:g" opt;
+while getopts ":i:r:s:o:p:b:f:q:n:d:m:a:c:l:g" opt;
 do
 	case "$opt" in
 		i) INREAD=$OPTARG;; 	# input read number for each sgRNA. (id name should match $INSGRNA)
@@ -33,6 +34,7 @@ do
 		p) PREFIX=$OPTARG;; 	# prefix for experiment output
 		b) BG=$OPTARG;; 		# background column names. eg. "unsortedRep1,unsortedRep2"
 		f) FG=$OPTARG;; 		# foreground column names. eg. "gpf+mcherry-,gpf-mcherry+"
+		q) QNORM=$OPTARG;; 	# quantile normalization of input reads among fgs and bgs, respectively. 0 or 1. default 0.
 		n) NBCUTOFF=$OPTARG;;  	# pval cutoff for sgRNA using negative bionomial test. Default=0.05.
 		d) DIRECTION=$OPTARG;; 	# set to 1 to get only enriched sgRNA in fg. -1 for only depleted sgRNA. Default=1.
 		m) METHOD=$OPTARG;; 	# method used to call aggregate pvalue from pooled sgRNA pvalues. Choose from [RRA,min,geom.mean,median,stuart]. Default=RRA
@@ -54,7 +56,7 @@ echo "./crispy $@"
 
 ## reads -> sgRNA
 echo "######### 1. read counts -> sgRNA signals ... #########"
-./bin/call.gRNA.R --inFile=$INREAD --bg="$BG" --fg="$FG" --outDir="$OUTDIR" --prefix="$PREFIX"
+./bin/call.gRNA.R --inFile=$INREAD --bg="$BG" --fg="$FG" --outDir="$OUTDIR" --prefix="$PREFIX" --qnorm="$QNORM"
 
 ## sgRNA -> sgRNA signals in loci
 #echo "######### getting sgRNA signal from pvalues ... #########"

@@ -35,6 +35,22 @@ rm -rf "results.Yarui"
            	-n 0.05 \
            	-c 3
 
+
+## demo2.1
+# with qnorm
+./crispy.sh -i demos/d1.Yarui/data.tsv \
+            -r demos/d1.Yarui/regions.bed \
+            -s demos/d1.Yarui/oligos.tsv \
+            -o results.Yarui \
+            -p "cis_stringent_qnorm" \
+            -b "ctr1,ctr2" \
+            -f "cis1,cis2,cis3,cis4,cis5" \
+			-q 1 \
+            -d 1 \
+            -n 0.05 \
+            -c 3
+
+
 ## demo3
 # no replicate mode; call only depleted sgRNA; use method=min
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
