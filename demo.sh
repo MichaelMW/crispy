@@ -10,7 +10,7 @@
 rm -rf "results.Yarui"
 
 ## demo1, Yarui, 2017 nature method paper. 
-# loose pvalue cut off; call only enriched sgRNA
+# loose pvalue cut off
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
@@ -18,12 +18,11 @@ rm -rf "results.Yarui"
             -p "cis_loose" \
             -b "ctr1,ctr2" \
             -f "cis1,cis2,cis3,cis4,cis5" \
-			-d 1 \
            	-n 0.1 \
            	-c 1
 
 ## demo2
-# stringent pvalue cutoff; call only enriched sgRNA
+# stringent pvalue cutoff
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
@@ -31,13 +30,12 @@ rm -rf "results.Yarui"
             -p "cis_stringent" \
             -b "ctr1,ctr2" \
             -f "cis1,cis2,cis3,cis4,cis5" \
-			-d 1 \
            	-n 0.05 \
            	-c 3
 
 
 ## demo2.1
-# with qnorm
+# stringent pvalue cutoff, with qnorm
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
@@ -46,13 +44,13 @@ rm -rf "results.Yarui"
             -b "ctr1,ctr2" \
             -f "cis1,cis2,cis3,cis4,cis5" \
 			-q 1 \
-            -d 1 \
             -n 0.05 \
             -c 3
 
 
 ## demo3
-# no replicate mode; call only depleted sgRNA; use method=min
+# example to show unconventional usage. 
+# no replicate mode; call only depleted sgRNA; use method=min instead of RRA
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \

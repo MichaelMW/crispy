@@ -22,6 +22,12 @@ if(!("edgeR" %in% insPacs)){
   biocLite("edgeR")
 }
 
+library(preprocessCore)
+library(statmod)
+library(edgeR)
+library(gridExtra)
+library(ggfortify)
+library(ggplot2)
 
 ################## Input args and input. #####################
 args <- commandArgs(TRUE)
@@ -30,9 +36,7 @@ if(length(args) < 1) {
 }
 if("--help" %in% args) {
   cat("
-	crispr.r using edgeR, statmod and ggplot2 libraries.
-  needs multiple biological reps in both treatment and control group to work.
-	
+
 	Arguments:
 	--inFile=[inFile.tsv, please include a header]
 	--fg=[colomn names as foreground/test group, eg. 'exp1,exp2']
@@ -93,8 +97,7 @@ if(length(unlist(fgs))==1 || length(unlist(bgs))==1){
   cat("#### Warning: ####\nno biological replicates provided, using pooled fg/bg for dispersion estimation\nFor details, checkout estimateGLMCommonDisp in edgeR.\n\n")
 }
 
-# input preprocessing
-library(edgeR)
+### input preprocessing
 dat = read.table(inFile, header = T)
 status = as.factor(dat[,dim(dat)[2]])
 ncol = length(c(unlist(fgs), unlist(bgs)))
@@ -103,28 +106,7 @@ design = model.matrix(~group)
 reads.fgs = dat[,unlist(fgs)]
 reads.bgs = dat[,unlist(bgs)]
 
-# plot PCA with all reads. 
-library(ggfortify)
-X <- dat[,2:(dim(dat)[2]-1)]
-#pca1
-ppca1 <- autoplot(prcomp(X), data=dat, colour = "Group",
-         loadings = T,
-         loadings.colour = 'blue', 
-         loadings.label = T) + theme_classic()
-#pca2
-tDat <- as.data.frame(t(dat))
-tX <- data.matrix(tDat[2:(dim(tDat)[1]-1),])
-ppca2 <- autoplot(prcomp(tX), label = TRUE, shape = FALSE) + theme_classic()
-# plot
-library(gridExtra)
-outPdf = paste0(outDir, "/", paste0(prefix, ".PCA.pdf"))
-cat(paste0("plot PCA file = ", outPdf,"\n"))
-pdf(outPdf, width = 7, height = 10)
-grid.arrange(ppca1, ppca2, nrow = 2)
-dev.off()
-
 # quantile normalization of reads
-library(preprocessCore)
 qnormFun <- function(df){
   mat = as.matrix(df)
   df.qnorm = normalize.quantiles(mat)
@@ -145,7 +127,29 @@ if(qnorm=="1"){
 }
 reads = cbind(reads.fgs,reads.bgs)
 
-# negative bionormial test
+### plot PCA with all reads. 
+# replace dat by qnorm
+if(qnorm=="1"){
+  idxReplace = match(colnames(reads),colnames(dat))
+  dat[,idxReplace] <- reads
+}
+nSamp = c(2:(dim(dat)[2]-1))
+X <- dat[,nSamp]
+# pca1
+cat("Running PCA on sgRNAs ...\n")
+set.seed(0)
+ppca1 <- autoplot(prcomp(X), data=dat, colour = colnames(dat)[dim(dat)[2]],
+                  loadings = T,
+                  loadings.colour = 'blue', 
+                  loadings.label = T) + theme_classic()
+# pca2
+cat("Running PCA on experiments ...\n")
+tX <- as.data.frame(t(dat[,nSamp]))
+set.seed(0)
+ppca2 <- autoplot(prcomp(tX), label = TRUE, shape = FALSE) + theme_classic()
+
+### negative binomial test
+cat("Negative binomial test on sgRNAs ...\n")
 dlist = DGEList(as.matrix(reads))
 if(hasRep==1){
   d = estimateDisp(calcNormFactors(dlist), design)
@@ -167,16 +171,17 @@ outTsv=paste0(outDir, "/", paste0(prefix, ".sgRNA.tsv"))
 write.table(format(tab,digits =4), file=outTsv, quote=FALSE, sep='\t')
 
 ## plotting QC
-library(ggplot2)
-outPdf = paste0(outDir, "/", paste0(prefix, ".qc.pdf"))
-cat(paste0("plot QC file = ", outPdf,"\n"))
-pdf(outPdf, width = 7, height = 10)
 # fc.vs.cpm
 p1 <- ggplot(tab, aes(x=logCPM,y=logFC)) +
-  geom_point(aes(colour = status), size = 1)
+  geom_point(aes(colour = status), size = 1) + theme_classic()
 
 # pval.vs.fc
 p2 <- ggplot(tab, aes(x=logFC,y=PValue)) +
-  geom_point(aes(colour = status), size = 1)
-grid.arrange(p1, p2, nrow = 2)
+  geom_point(aes(colour = status), size = 1) + theme_classic()
+
+## output all figures to file
+outPdf = paste0(outDir, "/", paste0(prefix, ".qc.pdf"))
+cat(paste0("plot QC file = ", outPdf,"\n"))
+pdf(outPdf, width = 12, height = 10)
+grid.arrange(ppca1, ppca2, p1, p2, nrow = 2)
 dev.off()

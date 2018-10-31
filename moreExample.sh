@@ -6,40 +6,6 @@
 ## -a is rra peaks. Crispy default is use 1 to keep all (recommended). 
 ## -c higher is more stringent. 3 means 0.001 peaks filter in macs2. Lower this value down to 0+ to get more peaks. 
 
-## demo1, Yarui, 2017 nature method paper. 
-# loose
-./crispy.sh -i demos/d1.Yarui/data.tsv \
-            -r demos/d1.Yarui/regions.bed \
-            -s demos/d1.Yarui/oligos.tsv \
-            -o results.Yarui \
-            -p "cis_loose" \
-            -b "ctr1,ctr2" \
-            -f "cis1,cis2,cis3,cis4,cis5" \
-           	-n 0.1 \
-           	-c 1
-
-# stringent
-./crispy.sh -i demos/d1.Yarui/data.tsv \
-            -r demos/d1.Yarui/regions.bed \
-            -s demos/d1.Yarui/oligos.tsv \
-            -o results.Yarui \
-            -p "cis_stringent" \
-            -b "ctr1,ctr2" \
-            -f "cis1,cis2,cis3,cis4,cis5" \
-           	-n 0.05 \
-           	-c 3
-
-# no replicate mode
-./crispy.sh -i demos/d1.Yarui/data.tsv \
-            -r demos/d1.Yarui/regions.bed \
-            -s demos/d1.Yarui/oligos.tsv \
-            -o results.Yarui \
-            -p "cis_stringent_noRep" \
-            -b "ctr1" \
-            -f "cis1" \
-           	-n 0.05 \
-           	-c 3
-
 
 ## demo2, Sox2 from Xingjie & Xiaoyu
 # using tiling 50bp bins as regions input. 
@@ -60,6 +26,27 @@
             -p "target" \
             -b "S1.Unsorted,S2.Unsorted" \
             -f "S1.GnMp,S2.GpMn"
+
+
+## demo 2.1
+# use all 4 single channel results as foreground
+./crispy.sh -i demos/d2.SOX2/reads.tsv \
+            -r demos/d2.SOX2/regions.bed \
+            -s demos/d2.SOX2/oligos.tsv \
+            -o results.SOX2 \
+            -p "tiling_4fg" \
+            -b "S1.Unsorted,S2.Unsorted" \
+            -f "S1.GnMp,S1.GpMn,S2.GnMp,S2.GpMn"
+
+# use qnorm
+./crispy.sh -i demos/d2.SOX2/reads.tsv \
+            -r demos/d2.SOX2/regions.bed \
+            -s demos/d2.SOX2/oligos.tsv \
+            -o results.SOX2 \
+            -p "tiling_4fg_qnorm" \
+            -b "S1.Unsorted,S2.Unsorted" \
+            -f "S1.GnMp,S1.GpMn,S2.GnMp,S2.GpMn" \
+			-q 1
 
 
 ## demo3, FMR1, AFF2 double tag from Xingjie. 
