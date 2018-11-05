@@ -138,6 +138,9 @@ if(qnorm=="1"){
   X = qnormFun(X)
 }else{
   cat("no quantile normalization is performed\n")
+  reads = cbind(reads.fgs,reads.bgs)
+  nSamp = c(2:(dim(dat)[2]-1))
+  X = dat[,nSamp]
 }
 
 ### plot PCA with all reads. 
