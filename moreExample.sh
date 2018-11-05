@@ -48,6 +48,16 @@
             -f "S1.GnMp,S1.GpMn,S2.GnMp,S2.GpMn" \
 			-q 1
 
+# use qnorm on all experiments 
+./crispy.sh -i demos/d2.SOX2/reads.tsv \
+            -r demos/d2.SOX2/regions.bed \
+            -s demos/d2.SOX2/oligos.tsv \
+            -o results.SOX2 \
+            -p "tiling_4fg_qnorm_all" \
+            -b "S1.Unsorted,S2.Unsorted" \
+            -f "S1.GnMp,S1.GpMn,S2.GnMp,S2.GpMn" \
+			-q 2
+
 
 ## demo3, FMR1, AFF2 double tag from Xingjie. 
 ## XR016, 17 contains FMR1 low AFF2 high signals

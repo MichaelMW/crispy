@@ -41,7 +41,7 @@ if("--help" %in% args) {
 	--inFile=[inFile.tsv, please include a header]
 	--fg=[colomn names as foreground/test group, eg. 'exp1,exp2']
   --bg=[colomn names as background/control group, eg. 'exp3,exp4']
-  --qnorm=[1 for quantile normalization of reads within fgs and within bgs. default is 0.]
+  --qnorm=[1 for quantile normalization of reads within fgs and within bgs. 2 for quantile normalization among all experiments (warning: this is a strong hypothesis). default is 0.]
 	--outDir=[name of output dir]
   --prefix=[optional prefix for each file name. eg.'GPF+mCherry-']
 	--help
@@ -114,7 +114,7 @@ qnormFun <- function(df){
   colnames(df.qnorm) = colnames(df)
   return(df.qnorm)
 }
-# condition
+# qnorm condition
 if(qnorm=="1"){
   if(length(unlist(fgs))>1){
     reads.fgs = qnormFun(reads.fgs)
@@ -124,17 +124,23 @@ if(qnorm=="1"){
     reads.bgs = qnormFun(reads.bgs)
     cat("using quantile normalization on background ...\n")
   }
-}
-reads = cbind(reads.fgs,reads.bgs)
-
-### plot PCA with all reads. 
-# replace dat by qnorm
-if(qnorm=="1"){
+  # patch dat with qnormed reads in fg and bg
+  reads = cbind(reads.fgs,reads.bgs)
   idxReplace = match(colnames(reads),colnames(dat))
   dat[,idxReplace] <- reads
+  nSamp = c(2:(dim(dat)[2]-1))
+  X = dat[,nSamp]
+}else if(qnorm=="2"){
+  cat("using quantile normalization on reads from all experiments (warning: strong hypothesis!) ...\n")
+  reads = cbind(reads.fgs,reads.bgs)
+  nSamp = c(2:(dim(dat)[2]-1))
+  X = dat[,nSamp]
+  X = qnormFun(X)
+}else{
+  cat("no quantile normalization is performed\n")
 }
-nSamp = c(2:(dim(dat)[2]-1))
-X <- dat[,nSamp]
+
+### plot PCA with all reads. 
 # pca1
 cat("Running PCA on sgRNAs ...\n")
 set.seed(0)
@@ -186,6 +192,7 @@ p2 <- ggplot(tab, aes(x=logFC,y=PValue)) +
 # pdf(outPdf, width = 12, height = 10)
 # grid.arrange(ppca1, ppca2, p1, p2, nrow = 2)
 # dev.off()
+
 
 ## png
 outPng = paste0(outDir, "/", paste0(prefix, ".qc.png"))
