@@ -41,7 +41,7 @@ if("--help" %in% args) {
 	--inFile=[inFile.tsv, please include a header]
 	--fg=[colomn names as foreground/test group, eg. 'exp1,exp2']
   --bg=[colomn names as background/control group, eg. 'exp3,exp4']
-  --qnorm=[1 for quantile normalization of reads within fgs and within bgs. 2 for quantile normalization among all experiments (warning: this is a strong hypothesis). default is 0.]
+  --qnorm=[1 for quantile normalization of reads within fgs and within bgs. 2 for all experiments (warning: this is a strong hypothesis). Or you can specify by providing the column names, eg. '-q ctr1,ctr2,high1,high2' . Default is 0 for no qnrom.]
 	--outDir=[name of output dir]
   --prefix=[optional prefix for each file name. eg.'GPF+mCherry-']
 	--help
@@ -89,6 +89,8 @@ cat(message)
 # inFile = "../demos/d1.Yarui/data.tsv"
 # fgs=list("cis1", "cis2", "cis3", "cis4", "cis5")
 # bgs=list("ctr1", "ctr2")
+# qnorm="ctr1,ctr2,high1,high2"
+# qnorm=1
 
 # check on rep
 hasRep = 1
@@ -105,6 +107,7 @@ group = c(rep("fg", length(unlist(fgs))), rep("bg", length(unlist(bgs))))
 design = model.matrix(~group)
 reads.fgs = dat[,unlist(fgs)]
 reads.bgs = dat[,unlist(bgs)]
+nSamp = c(2:(dim(dat)[2]-1))
 
 # quantile normalization of reads
 qnormFun <- function(df){
@@ -128,7 +131,6 @@ if(qnorm=="1"){
   reads = cbind(reads.fgs,reads.bgs)
   idxReplace = match(colnames(reads),colnames(dat))
   dat[,idxReplace] <- reads
-  nSamp = c(2:(dim(dat)[2]-1))
   X = dat[,nSamp]
 }else if(qnorm=="2"){
   cat("using quantile normalization on reads from all experiments (warning: strong hypothesis!) ...\n")
@@ -136,6 +138,23 @@ if(qnorm=="1"){
   nSamp = c(2:(dim(dat)[2]-1))
   X = dat[,nSamp]
   X = qnormFun(X)
+}else if(grepl(",",qnorm,fixed=TRUE)){
+  # qnorm the specified columns from input string "qnorm"
+  qnormArray = unlist(strsplit(qnorm,","))
+  cat(paste0("using specified experiments: ", qnorm, " to perform qnorm ...\n"))
+  # check arguments. 
+  if(all(qnormArray %in% colnames(dat)[nSamp]) == FALSE){
+    stop("Error: Provided qnorm experiments doesn't agree with provided read count header!")
+  }
+  if(length(qnormArray)<=1){
+    stop("Error: too few specified experiments for qnorm!")
+  }
+  dat.qnormed = qnormFun(dat[,qnormArray])
+  dat[,qnormArray] <- dat.qnormed
+  reads.fgs = dat[,unlist(fgs)]
+  reads.bgs = dat[,unlist(bgs)]
+  reads = cbind(reads.fgs,reads.bgs)
+  X = dat[,nSamp]
 }else{
   cat("no quantile normalization is performed\n")
   reads = cbind(reads.fgs,reads.bgs)
@@ -146,7 +165,6 @@ if(qnorm=="1"){
 ### plot PCA with all reads. 
 # pca1
 cat("Running PCA on sgRNAs ...\n")
-set.seed(0)
 ppca1 <- autoplot(prcomp(X), data=dat, colour = colnames(dat)[dim(dat)[2]],
                   loadings = T,
                   loadings.colour = 'blue', 
@@ -154,7 +172,6 @@ ppca1 <- autoplot(prcomp(X), data=dat, colour = colnames(dat)[dim(dat)[2]],
 # pca2
 cat("Running PCA on experiments ...\n")
 tX <- as.data.frame(t(dat[,nSamp]))
-set.seed(0)
 ppca2 <- autoplot(prcomp(tX), label = TRUE, shape = FALSE) + theme_classic()
 
 ### negative binomial test
@@ -195,7 +212,6 @@ p2 <- ggplot(tab, aes(x=logFC,y=PValue)) +
 # pdf(outPdf, width = 12, height = 10)
 # grid.arrange(ppca1, ppca2, p1, p2, nrow = 2)
 # dev.off()
-
 
 ## png
 outPng = paste0(outDir, "/", paste0(prefix, ".qc.png"))
