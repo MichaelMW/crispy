@@ -28,7 +28,7 @@
             -o results.SOX2 \
             -p "tiling_4fg_qnorm4fg_gfp" \
             -b "S1.Unsorted,S2.Unsorted" \
-            -f "S1.GnMp,S2.GnMp" \
+            -f "S1.GpMn,S2.GpMn" \
             -q "S1.GnMp,S1.GpMn,S2.GnMp,S2.GpMn"
 
 
@@ -39,6 +39,6 @@
             -o results.SOX2 \
             -p "tiling_4fg_qnorm4fg_mcherry" \
             -b "S1.Unsorted,S2.Unsorted" \
-            -f "S1.GpMn,S2.GpMn" \
+            -f "S1.GnMp,S2.GnMp" \
             -q "S1.GnMp,S1.GpMn,S2.GnMp,S2.GpMn"
 
