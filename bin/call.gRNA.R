@@ -207,15 +207,15 @@ p2 <- ggplot(tab, aes(x=logFC,y=PValue)) +
 
 ## output all figures to file
 ## pdf (high quality but slow rendering)
-# outPdf = paste0(outDir, "/", paste0(prefix, ".qc.pdf"))
-# cat(paste0("plot QC file = ", outPdf,"\n"))
-# pdf(outPdf, width = 12, height = 10)
-# grid.arrange(ppca1, ppca2, p1, p2, nrow = 2)
-# dev.off()
-
-## png
-outPng = paste0(outDir, "/", paste0(prefix, ".qc.png"))
-cat(paste0("plot QC file = ", outPng,"\n"))
-png(outPng, width = 900, height = 700)
+outPdf = paste0(outDir, "/", paste0(prefix, ".qc.pdf"))
+cat(paste0("plot QC file = ", outPdf,"\n"))
+pdf(outPdf, width = 12, height = 10)
 grid.arrange(ppca1, ppca2, p1, p2, nrow = 2)
 dev.off()
+
+## png
+#outPng = paste0(outDir, "/", paste0(prefix, ".qc.png"))
+#cat(paste0("plot QC file = ", outPng,"\n"))
+#png(outPng, width = 900, height = 700)
+#grid.arrange(ppca1, ppca2, p1, p2, nrow = 2)
+#dev.off()
