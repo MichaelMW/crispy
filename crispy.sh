@@ -90,7 +90,7 @@ echo "######### 3. target region signals -> peak smoothing ... #########"
 subtractBed -a $INREGION -b $regionSignal | awk '{print $0"\t"0}' | cat - $regionSignal | ./bin/mySortBed > tmp; mv tmp $regionSignal
 ## call peaks
 peakSignal="$OUTDIR/$PREFIX.peak.bedgraph"
-macs2 bdgpeakcall -i $regionSignal -l $MINLEN -g $MAXGAP -c $PEAKCUTOFF -o /dev/stdout | tail -n+2 | cut -f1-3,10 > $peakSignal
+macs2 bdgpeakcall -i $regionSignal -l $MINLEN -g $MAXGAP -c $PEAKCUTOFF -o /dev/stdout | tail -n+2 | cut -f1-3,5 > $peakSignal
 rm tmp.{1,2,3,4,5}
 echo -e "Crispy Done!\n\n\n"
 
