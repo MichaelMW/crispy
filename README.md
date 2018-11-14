@@ -17,6 +17,13 @@ A lightweight versatile pipeline for crispr-screening analysis.
 * automate read counts and QC
 
 ## history
+* v1.3.5:
+	* Qnorm supports batch operator using ";" and ",". eg. -q "cis1,cis2;ctr1,ctr2;high1,high2"
+	* More QC option
+		* MIN_CPM filter (-u) and MIN_CPM_RATIO filter (-v). 
+	* More QC plot
+		* Read count density plot
+
 * v1.3:
 	* added support for direction (use -d 1 for enriched sgRNA [up-regulator], -d -1 for depleted sgRNA [down-regulator] )
 	* added support for aggregation methods (use -m [RRA, min,geom.mean,median,stuart]. Default=RRA)

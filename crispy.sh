@@ -12,6 +12,9 @@ command -v bedtools >/dev/null 2>&1 || { echo "bedtools not found. Try this page
 OUTDIR="crispyOUT"
 PREFIX="results"
 QNORM="0"
+MINCPM="5"
+MINCPMRATIO="0.5"
+PLOTFORMAT="PDF"
 NBCUTOFF=0.05
 DIRECTION=1
 METHOD="RRA"
@@ -24,7 +27,7 @@ MAXGAP=200
 SGRNAKW="test"  ## keywords used to grep from sgRNA for the designed ones. 
 
 ## Get arguments
-while getopts ":i:r:s:o:p:b:f:q:n:d:m:a:c:l:g" opt;
+while getopts ":i:r:s:o:p:b:f:q:t:u:v:n:d:m:a:c:l:g" opt;
 do
 	case "$opt" in
 		i) INREAD=$OPTARG;; 	# input read number for each sgRNA. (id name should match $INSGRNA)
@@ -34,7 +37,10 @@ do
 		p) PREFIX=$OPTARG;; 	# prefix for experiment output
 		b) BG=$OPTARG;; 		# background column names. eg. "unsortedRep1,unsortedRep2"
 		f) FG=$OPTARG;; 		# foreground column names. eg. "gpf+mcherry-,gpf-mcherry+"
-		q) QNORM=$OPTARG;; 	# quantile normalization of input reads among fgs and bgs, respectively. 0 or 1. default 0.
+		q) QNORM=$OPTARG;;		# quantile normalization of input reads among fgs and bgs, respectively. 0 or 1. default 0. You can also specify by using colnames, "," and ";". eg. "-q cis1,cis2;ctr1,ctr2;high1,high2"
+		t) PLOTFORMAT=$OPTARG;;	# format of qc plot. default="pdf". Use png for faster loading.
+		u) MINCPM=$OPTARG;;		# minimal read count cutoff for sgRNA to be deemed as express. Use 0 to disable this filter. Default:5
+		v) MINCPMRATIO=$OPTARG;;# minimal ratio of FGs or BGs that have sgRNA read count higher than MINCPM. Use 0 to disable this filter. Default:0.5
 		n) NBCUTOFF=$OPTARG;;  	# pval cutoff for sgRNA using negative bionomial test. Default=0.05.
 		d) DIRECTION=$OPTARG;; 	# set to 1 to get only enriched sgRNA in fg. -1 for only depleted sgRNA. Default=1.
 		m) METHOD=$OPTARG;; 	# method used to call aggregate pvalue from pooled sgRNA pvalues. Choose from [RRA,min,geom.mean,median,stuart]. Default=RRA
@@ -56,7 +62,7 @@ echo "./crispy $@"
 
 ## reads -> sgRNA
 echo "######### 1. read counts -> sgRNA signals ... #########"
-./bin/call.gRNA.R --inFile=$INREAD --bg="$BG" --fg="$FG" --outDir="$OUTDIR" --prefix="$PREFIX" --qnorm="$QNORM"
+./bin/call.gRNA.R --inFile=$INREAD --bg="$BG" --fg="$FG" --outDir="$OUTDIR" --prefix="$PREFIX" --plotFormat="$PLOTFORMAT" --qnorm="$QNORM" --min_cpm="$MINCPM" --min_cpm_ratio="$MINCPMRATIO"
 
 ## sgRNA -> sgRNA signals in loci
 #echo "######### getting sgRNA signal from pvalues ... #########"
