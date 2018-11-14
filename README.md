@@ -22,6 +22,7 @@ A lightweight versatile pipeline for crispr-screening analysis.
 	* More QC option
 		* MIN_CPM filter (-u) and MIN_CPM_RATIO filter (-v). 
 	* More QC plot
+		* Violin + Boxplot for read count distribution
 		* Read count density plot
 
 * v1.3:
