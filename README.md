@@ -4,6 +4,7 @@ A lightweight versatile pipeline for crispr-screening analysis.
 ## Demo
 
 * run `./demo.sh` to check if the pipeline works
+* run `./test.sh` to test the latest feature
 
 ## More Examples
 * read `moreExample.sh` for optimal parameters for your experiments. 
