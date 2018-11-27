@@ -36,3 +36,7 @@ A lightweight versatile pipeline for crispr-screening analysis.
 * v1.2:
 	* Counter template included. 
 	* Support for experiments without replication.
+
+
+## Licence
+* MIT

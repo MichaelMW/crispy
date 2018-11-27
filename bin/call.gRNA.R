@@ -29,8 +29,8 @@ if("--help" %in% args) {
   --bg=[colomn names as background/control group, eg. 'exp3,exp4']
   --min_cpm=[minimal read count cutoff for sgRNA to be deemed as express. Use 0 to disable this filter. Default:5]
   --min_cpm_ratio=[minimal ratio of FGs or BGs that have sgRNA read count higher than MINCPM. Use 0 to disable this filter. Default:0.5]
-  --qnorm=[1 for quantile normalization of reads within fgs and within bgs. 2 for all experiments (warning: this is a strong hypothesis). Or you can specify by providing the column names, eg. '-q cis1,cis2;ctr1,ctr2;high1,high2' . Default is 0 for no qnrom.]
-	--outDir=[name of output dir]
+  --qnorm=[0 for no quantile normalization and 1 for separate qnorm within fgs and within bgs. Or you can specify by providing the column names, eg. '-q cis1,cis2;ctr1,ctr2;high1,high2' . Default:0.]
+  --outDir=[name of output dir]
   --prefix=[optional prefix for each file name. eg.'GPF+mCherry-']
   --plotFormat=[pdf or png. default=pdf.]
 	--help
@@ -77,12 +77,15 @@ message = paste0("using infile = ", inFile, "\n",
 cat(message)
 
 ####################### debug input start from here. #######################
-# #debug
+#debug
 # setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 # inFile = "../demos/d1.Yarui/data.tsv"
-# fgs=c("cis1")
-# bgs=c("high1","high2","high3")
+# fgs=c("cis1","cis2","cis3","cis4","cis5")
+# bgs=c("ctr1","ctr2")
 # qnorm = 0
+# min_cpm = 5
+# min_cpm_ratio = 0.5
+# 
 
 ### read data. 
 dat = read.table(inFile, header = T)
@@ -98,6 +101,7 @@ str2lists <- function(inStr){
   b = strsplit(a,",")
   return(b)
 }
+
 if(grepl(",", qnorm, fixed=TRUE)){
   qnormLists = str2lists(qnorm)
   qnormFlat = unlist(qnormLists)
@@ -107,7 +111,6 @@ if(grepl(",", qnorm, fixed=TRUE)){
     if(length(qnormArray)<=1) stop("Needs 2 or more specified experiments for each qnorm group!")
   }
 }
-if(qnorm==2) cat("qnorm=2. Quantile normalization on reads from all experiments (warning: strong hypothesis!) ...\n")
 
 ## check number of rep
 if(length(fgs)==1 || length(bgs)==1){
@@ -140,9 +143,6 @@ if(qnorm=="1"){
   cat("qnorm within fgs and within bgs\n")
   if(length(fgs)>1) dat = qnormCols(dat, fgs)
   if(length(bgs)>1) dat = qnormCols(dat, bgs)
-}else if(qnorm=="2"){
-  cat("qnorm in all experiments\n")
-  dat = qnormCols(dat, allExps)
 }else if(grepl(",", qnorm, fixed=TRUE)){
   cat("qnorm in the specified columns\n")
   for(qnormList in str2lists(qnorm)){
@@ -170,22 +170,21 @@ cat("Running PCA ...\n")
 ppca1 <- autoplot(prcomp(X), data=dat, colour = colnames(dat)[dim(dat)[2]],
                   loadings = T,
                   loadings.colour = 'blue', 
-                  loadings.label = T) + theme_classic()
+                  loadings.label = T,
+                  size = 0.5) + theme_classic()
 ## pca2 # view by experiments
 tX <- as.data.frame(t(X))
 ppca2 <- autoplot(prcomp(tX), 
                   label = TRUE, 
+                  loadings.label.repel=T,
                   shape = FALSE) + theme_classic()
 
 ### keep sgRNA that "expressed in at least one conditions" ### following guideline from edgeR
-# # the original crest-seq cpm filter
-# min_cpm = 3
-# min_cpm_ratio = 1/3
-# row.use = (rowMeans(data.frame(dat[,c(fgs,bgs)] > min_cpm)) >= min_cpm_ratio)
-
-# the CRISPY cpm filter, scalable and fixes unbalanced issure
 # min_cpm = 5
 # min_cpm_ratio = 0.5
+## the original crest-seq cpm filter
+#row.use = (rowMeans(data.frame(dat[,c(fgs,bgs)] > min_cpm)) >= min_cpm_ratio)
+## the CRISPY cpm filter, scalable and fixes unbalanced issure
 row.use.fgs = (rowMeans(data.frame(dat[,c(fgs)] > min_cpm)) >= min_cpm_ratio)
 row.use.bgs = (rowMeans(data.frame(dat[,c(bgs)] > min_cpm)) >= min_cpm_ratio)
 row.use = (row.use.fgs | row.use.bgs)
@@ -216,7 +215,8 @@ X = data.frame(FGs = rowMeans(log10(data.frame(dat.filtered[,c(fgs)])+1)),
                BGs = rowMeans(log10(data.frame(dat.filtered[,c(bgs)])+1)),
                Group = dat.filtered[,nCol])
 distr3 <- ggplot(X, aes(x=BGs, y=FGs, color=Group)) +
-  geom_point(size = 0.5) +
+  geom_point(alpha = 0.3, size = 0.5) +
+  geom_point(size = 0.5, data = subset(X, Group!="test")) +
   xlab("Filtered normalized reads counts in BGs -- Log10(N+1)") +
   ylab("Filtered normalized reads counts in FGs") +
   theme_classic()
@@ -255,18 +255,36 @@ topTags(results)
 outTsv=paste0(outDir, "/", paste0(prefix, ".sgRNA.tsv"))
 write.table(format(tab,digits =4), file=outTsv, quote=FALSE, sep='\t')
 
+## plot pval distribution to guide pvalue cutoff choice. 
+tab_pvals = tab[,c("PValue","logFC","status")]
+pvalDistro <- ggplot(tab_pvals, aes(x=status, y=-log10(PValue))) + 
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  xlab("sgRNA group") +
+  ylab("-log10(pval)") +
+  scale_y_continuous(breaks=seq(0,max(-log10(tab_pvals$PValue)),1)) +
+  theme(panel.grid.major.y = element_line(colour = "black", linetype = "dashed"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.background = element_rect(fill = "white",colour = "black"))
+
+
 ## plotting QC
 # fc.vs.cpm
-p1 <- ggplot(tab, aes(x=logCPM,y=logFC)) +
-  geom_point(aes(colour = status), size = 1) + theme_classic()
+p1 <- ggplot(tab, aes(x=logCPM,y=logFC, colour = status)) +
+  geom_point(size = 0.5) + 
+  geom_point(size = 0.5, data = subset(tab, status!="test")) +
+  theme_classic()
 
-# # pval.vs.fc
-# p2 <- ggplot(tab, aes(x=logFC,y=PValue)) +
-#   geom_point(aes(colour = status), size = 1) + theme_classic()
+# pval.vs.fc
+p2 <- ggplot(tab, aes(x=logFC,y=PValue, colour = status)) +
+  geom_point(size = 0.5) +
+  geom_point(size = 0.5, data = subset(tab, status!="test")) +
+  theme_classic()
 
 ## output all figures to file
 outQcPlot.width = 15
-outQcPlot.height = 9
+outQcPlot.height = 12
 png.res = 200 # ppi
 if(plotFormat=="png"){
   ## png, fast but lower quality
@@ -279,7 +297,7 @@ if(plotFormat=="png"){
   cat(paste0("plot QC file = ", outQcPlot,"\n"))
   pdf(outQcPlot, width = outQcPlot.width, height = outQcPlot.height)
 }
-grid.arrange(distr1, ppca1, ppca2, distr2, distr3, p1, nrow = 2)
+grid.arrange(distr1, ppca1, ppca2, distr2, distr3, p1, p2, pvalDistro, nrow = 3)
 dev.off()
 
 
