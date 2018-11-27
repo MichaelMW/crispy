@@ -18,6 +18,9 @@ A lightweight versatile pipeline for crispr-screening analysis.
 * automate read counts and QC
 
 ## history
+* v1.3.6:
+	* Now qc plot includes negative and positive sgRNAs as reference to guide user pick pvalue cutoff for '-n $NBCUTOFF'.
+
 * v1.3.5:
 	* Qnorm supports batch operator using ";" and ",". eg. -q "cis1,cis2;ctr1,ctr2;high1,high2"
 	* More QC option
