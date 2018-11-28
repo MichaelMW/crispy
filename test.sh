@@ -11,13 +11,22 @@
 
 rm -rf "results.test"
 
-
 # default CPM filter cutoff
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
             -o results.test \
             -p "cis_default" \
+            -b "ctr1,ctr2" \
+            -f "cis1,cis2,cis3,cis4,cis5" \
+			-t "png" \
+
+# default CPM filter cutoff, with qnorm
+./crispy.sh -i demos/d1.Yarui/data.tsv \
+            -r demos/d1.Yarui/regions.bed \
+            -s demos/d1.Yarui/oligos.tsv \
+            -o results.test \
+            -p "cis_default_q" \
             -b "ctr1,ctr2" \
             -f "cis1,cis2,cis3,cis4,cis5" \
 			-q "cis1,cis2,cis3,cis4,cis5;ctr1,ctr2;high1,high2,high3" \
