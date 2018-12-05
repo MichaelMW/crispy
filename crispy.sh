@@ -62,7 +62,7 @@ echo "./crispy $@"
 
 ## reads -> sgRNA
 echo "######### 1. read counts -> sgRNA signals ... #########"
-./bin/call.gRNA.R --inFile=$INREAD --bg="$BG" --fg="$FG" --outDir="$OUTDIR" --prefix="$PREFIX" --plotFormat="$PLOTFORMAT" --qnorm="$QNORM" --min_cpm="$MINCPM" --min_cpm_ratio="$MINCPMRATIO"
+./bin/call.gRNA.R --inFile=$INREAD --bg="$BG" --fg="$FG" --outDir="$OUTDIR" --prefix="$PREFIX" --plotFormat="$PLOTFORMAT" --qnorm="$QNORM" --min_cpm="$MINCPM" --min_cpm_ratio="$MINCPMRATIO" --pvalCut="$NBCUTOFF" --direction="$DIRECTION"
 
 ## sgRNA -> sgRNA signals in loci
 #echo "######### getting sgRNA signal from pvalues ... #########"

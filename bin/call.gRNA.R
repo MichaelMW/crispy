@@ -30,6 +30,8 @@ if("--help" %in% args) {
   --min_cpm=[minimal read count cutoff for sgRNA to be deemed as express. Use 0 to disable this filter. Default:5]
   --min_cpm_ratio=[minimal ratio of FGs or BGs that have sgRNA read count higher than MINCPM. Use 0 to disable this filter. Default:0.5]
   --qnorm=[0 for no quantile normalization and 1 for separate qnorm within fgs and within bgs. Or you can specify by providing the column names, eg. '-q cis1,cis2;ctr1,ctr2;high1,high2' . Default:0.]
+  --pvalCut =[Use this cutoff to highlight positive sgRNAs passing the filter. No highlight if FALSE. Default:F]
+  --direction = [1 or -1. If pvalCut exists, use this cutoff to highlight positive sgRNAs passing the filter. No highlight if FALSE. Default:1 ]
   --outDir=[name of output dir]
   --prefix=[optional prefix for each file name. eg.'GPF+mCherry-']
   --plotFormat=[pdf or png. default=pdf.]
@@ -55,6 +57,8 @@ if(is.null(argsL$plotFormat)) argsL$plotFormat="pdf"
 if(is.null(argsL$qnorm)) argsL$qnorm=0
 if(is.null(argsL$min_cpm)) argsL$min_cpm=5
 if(is.null(argsL$min_cpm_ratio)) argsL$min_cpm_ratio=0.5
+if(is.null(argsL$pvalCut)) argsL$pvalCut=FALSE
+if(is.null(argsL$direction)) argsL$direction=1
 
 inFile = argsL$inFile
 fgs = unlist(strsplit(argsL$fg,","))
@@ -63,6 +67,8 @@ prefix = as.character(argsL$prefix)
 qnorm = as.character(argsL$qnorm)
 min_cpm = as.numeric(argsL$min_cpm)
 min_cpm_ratio = as.numeric(argsL$min_cpm_ratio)
+pvalCut = as.numeric(argsL$pvalCut)
+direction = as.numeric(argsL$direction)
 plotFormat = as.character(argsL$plotFormat)
 outDir=argsL$outDir
 dir.create(file.path(outDir), showWarnings = FALSE)
@@ -180,10 +186,6 @@ ppca2 <- autoplot(prcomp(tX),
                   shape = FALSE) + theme_classic()
 
 ### keep sgRNA that "expressed in at least one conditions" ### following guideline from edgeR
-# min_cpm = 5
-# min_cpm_ratio = 0.5
-## the original crest-seq cpm filter
-#row.use = (rowMeans(data.frame(dat[,c(fgs,bgs)] > min_cpm)) >= min_cpm_ratio)
 ## the CRISPY cpm filter, scalable and fixes unbalanced issure
 row.use.fgs = (rowMeans(data.frame(dat[,c(fgs)] > min_cpm)) >= min_cpm_ratio)
 row.use.bgs = (rowMeans(data.frame(dat[,c(bgs)] > min_cpm)) >= min_cpm_ratio)
@@ -220,14 +222,6 @@ distr3 <- ggplot(X, aes(x=BGs, y=FGs, color=Group)) +
   xlab("Filtered normalized reads counts in BGs -- Log10(N+1)") +
   ylab("Filtered normalized reads counts in FGs") +
   theme_classic()
-
-# ### reads percentile table. ###
-# qtab <- round(apply(X,2,quantile, probs = c(0,0.25,0.5, 0.75,1)), 2)
-# #libray(ggpubr)
-# #distr2_tab <- ggtexttable(qtab, theme = ttheme("classic"))
-# outTsv=paste0(outDir, "/", paste0(prefix, ".readsQt.tsv"))
-# #outTsv = "test.tsv"
-# write.table(qtab, file=outTsv, quote=FALSE, sep='\t')
 
 ### negative binomial test ###
 cat("Negative binomial test on sgRNAs ...\n")
@@ -270,7 +264,23 @@ pvalDistro <- ggplot(tab_pvals, aes(x=status, y=-log10(PValue))) +
 
 
 ## plotting QC
-# fc.vs.cpm
+# highlight postive sgRNA with pvalue < cutoff. 
+if(pvalCut){
+  tab$status <- as.character(tab$status)
+  # default. only positive FC
+  if(direction == 1){
+    filteredIdx = (tab$PValue < pvalCut & tab$status=="test" & tab$logFC>0)
+    posSgrnaMsg = paste0("Enriched sgRNA p < ", pvalCut)
+  }
+  # only negative FC
+  if(direction == -1){
+    filteredIdx = (tab$PValue < pvalCut & tab$status=="test" & tab$logFC<0)
+    posSgrnaMsg = paste0("Depleted sgRNA p < ", pvalCut)
+  }
+  tab[filteredIdx, "status"] = posSgrnaMsg
+}
+
+# fc.vs.cpm. The MA plot
 p1 <- ggplot(tab, aes(x=logCPM,y=logFC, colour = status)) +
   geom_point(size = 0.5) + 
   geom_point(size = 0.5, data = subset(tab, status!="test")) +
