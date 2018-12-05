@@ -18,6 +18,8 @@ A lightweight versatile pipeline for crispr-screening analysis.
 * automate read counts and QC
 
 ## history
+* v1.3.7:
+	* Highlight positive sgRNA based on -n and -d		
 * v1.3.6:
 	* Now qc plot includes negative and positive sgRNAs as reference to guide user pick pvalue cutoff for '-n $NBCUTOFF'.
 
