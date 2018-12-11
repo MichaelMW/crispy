@@ -68,6 +68,7 @@ qnorm = as.character(argsL$qnorm)
 min_cpm = as.numeric(argsL$min_cpm)
 min_cpm_ratio = as.numeric(argsL$min_cpm_ratio)
 pvalCut = as.numeric(argsL$pvalCut)
+postPvalMode = as.character(argsL$postPvalMode)
 direction = as.numeric(argsL$direction)
 plotFormat = as.character(argsL$plotFormat)
 outDir=argsL$outDir
@@ -92,6 +93,19 @@ cat(message)
 # min_cpm = 5
 # min_cpm_ratio = 0.5
 # 
+
+# inFile = "../demos/d2.SOX2/reads.tsv"
+# bgs=c("S1.Unsorted","S2.Unsorted")
+# fgs=c("S1.GpMn","S2.GpMn")
+# qnorm = 0
+# min_cpm = 5
+# min_cpm_ratio = 0.5
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+### hardcoded parameter
+negLabel = "negative"
+testLabel = "test"
+qcutoffs = c(0, 0.001, 0.005, 0.01, 0.05, 0.1) # pvalue guidelines help to aim at these qcutoffs.
 
 ### read data. 
 dat = read.table(inFile, header = T)
@@ -131,7 +145,7 @@ if(length(fgs)==1 || length(bgs)==1){
 ################## preprocessing ##################### 
 ### quantile normalization of reads
 qnormFun <- function(df){
-  mat = as.matrix(df)
+  mat = data.matrix(df)
   df.qnorm = as.data.frame(normalize.quantiles(mat))
   rownames(df.qnorm) = rownames(df)
   colnames(df.qnorm) = colnames(df)
@@ -159,7 +173,7 @@ if(qnorm=="1"){
 
 ### boxplot on all reads. ###
 cat("Plotting distribution of sgRNA reads ...\n")
-X = dat[, allExps]
+X = data.frame(dat[, allExps])
 X_stack = stack(X)
 colnames(X_stack) <- c("Read","Exp")
 
@@ -191,7 +205,6 @@ row.use.fgs = (rowMeans(data.frame(dat[,c(fgs)] > min_cpm)) >= min_cpm_ratio)
 row.use.bgs = (rowMeans(data.frame(dat[,c(bgs)] > min_cpm)) >= min_cpm_ratio)
 row.use = (row.use.fgs | row.use.bgs)
 
-#
 dat.filtered = dat[row.use, ]
 nsgRNA = dim(dat)[1]
 nsgRNA.filtered = dim(dat.filtered)[1]
@@ -218,7 +231,7 @@ X = data.frame(FGs = rowMeans(log10(data.frame(dat.filtered[,c(fgs)])+1)),
                Group = dat.filtered[,nCol])
 distr3 <- ggplot(X, aes(x=BGs, y=FGs, color=Group)) +
   geom_point(alpha = 0.3, size = 0.5) +
-  geom_point(size = 0.5, data = subset(X, Group!="test")) +
+  geom_point(size = 0.5, data = subset(X, Group!=testLabel)) +
   xlab("Filtered normalized reads counts in BGs -- Log10(N+1)") +
   ylab("Filtered normalized reads counts in FGs") +
   theme_classic()
@@ -249,6 +262,35 @@ topTags(results)
 outTsv=paste0(outDir, "/", paste0(prefix, ".sgRNA.tsv"))
 write.table(format(tab,digits =4), file=outTsv, quote=FALSE, sep='\t')
 
+## plotting QC
+# highlight postive sgRNA with pvalue < cutoff. 
+if(pvalCut > 0){
+  tab$status <- as.character(tab$status)
+  # default. only positive FC
+  if(direction == 1){
+    filteredIdx = (tab$PValue < pvalCut & tab$status==testLabel & tab$logFC>0)
+    posSgrnaMsg = paste0("Enriched sgRNA p < ", pvalCut)
+  }
+  # only negative FC
+  if(direction == -1){
+    filteredIdx = (tab$PValue < pvalCut & tab$status==testLabel & tab$logFC<0)
+    posSgrnaMsg = paste0("Depleted sgRNA p < ", pvalCut)
+  }
+  tab[filteredIdx, "status"] = posSgrnaMsg
+}
+
+# fc.vs.cpm. The MA plot
+p1 <- ggplot(tab, aes(x=logCPM,y=logFC, colour = status)) +
+  geom_point(size = 0.5) + 
+  geom_point(size = 0.5, data = subset(tab, status!=testLabel)) +
+  theme_classic()
+
+# pval.vs.fc
+p2 <- ggplot(tab, aes(x=logFC,y=PValue, colour = status)) +
+  geom_point(size = 0.5) +
+  geom_point(size = 0.5, data = subset(tab, status!=testLabel)) +
+  theme_classic()
+
 ## plot pval distribution to guide pvalue cutoff choice. 
 tab_pvals = tab[,c("PValue","logFC","status")]
 pvalDistro <- ggplot(tab_pvals, aes(x=status, y=-log10(PValue))) + 
@@ -262,35 +304,29 @@ pvalDistro <- ggplot(tab_pvals, aes(x=status, y=-log10(PValue))) +
         panel.grid.minor.x = element_blank(),
         panel.background = element_rect(fill = "white",colour = "black"))
 
-
-## plotting QC
-# highlight postive sgRNA with pvalue < cutoff. 
-if(pvalCut){
-  tab$status <- as.character(tab$status)
-  # default. only positive FC
-  if(direction == 1){
-    filteredIdx = (tab$PValue < pvalCut & tab$status=="test" & tab$logFC>0)
-    posSgrnaMsg = paste0("Enriched sgRNA p < ", pvalCut)
+## add pvalue cutoffs guided by FDR in qcutoffs ##
+## convert qvalue cutoff to the highest pvalue that satifies.
+qval2pval <- function(qcutoffs, pvals, status, testLabel, negLabel){
+  df.pval = data.frame(pvals= pvals,status = status)
+  df.pval = subset(df.pval, status %in% c(testLabel, negLabel))
+  df.pval$status = as.factor(as.character(df.pval$status))
+  df.pval.sorted = df.pval[order(df.pval$pvals),]
+  N_recNeg = cumsum(df.pval.sorted$status == negLabel)
+  N_allNeg = sum(status==negLabel)
+  dfm = data.frame(df.pval.sorted, 
+                   FDR = N_recNeg/N_allNeg)
+  idx = 1:nrow(dfm)
+  df.q2p = data.frame()
+  for(qcutoff in qcutoffs){
+    pcutoff = dfm[max(idx[dfm$FDR <= qcutoff]),]$pval
+    pcutoff = round(pcutoff,5)
+    df.q2p = rbind(df.q2p, data.frame(qcutoff = qcutoff,
+                                      pcutoff = pcutoff))
   }
-  # only negative FC
-  if(direction == -1){
-    filteredIdx = (tab$PValue < pvalCut & tab$status=="test" & tab$logFC<0)
-    posSgrnaMsg = paste0("Depleted sgRNA p < ", pvalCut)
-  }
-  tab[filteredIdx, "status"] = posSgrnaMsg
+  return(df.q2p)
 }
-
-# fc.vs.cpm. The MA plot
-p1 <- ggplot(tab, aes(x=logCPM,y=logFC, colour = status)) +
-  geom_point(size = 0.5) + 
-  geom_point(size = 0.5, data = subset(tab, status!="test")) +
-  theme_classic()
-
-# pval.vs.fc
-p2 <- ggplot(tab, aes(x=logFC,y=PValue, colour = status)) +
-  geom_point(size = 0.5) +
-  geom_point(size = 0.5, data = subset(tab, status!="test")) +
-  theme_classic()
+msg = qval2pval(qcutoffs, tab$PValue, tab$status, testLabel, negLabel)
+q2pGuideTab = tableGrob(msg, rows = NULL)  
 
 ## output all figures to file
 outQcPlot.width = 15
@@ -307,8 +343,5 @@ if(plotFormat=="png"){
   cat(paste0("plot QC file = ", outQcPlot,"\n"))
   pdf(outQcPlot, width = outQcPlot.width, height = outQcPlot.height)
 }
-grid.arrange(distr1, ppca1, ppca2, distr2, distr3, p1, p2, pvalDistro, nrow = 3)
+grid.arrange(distr1, ppca1, ppca2, distr2, distr3, p1, p2, pvalDistro, q2pGuideTab, nrow = 3)
 dev.off()
-
-
-### TODO: Clean up duplicated X, X_stack, dat, reads situation. 
