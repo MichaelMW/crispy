@@ -18,10 +18,14 @@ PLOTFORMAT="PDF"
 NBCUTOFF=0.05
 DIRECTION=1
 METHOD="RRA"
-RRACUTOFF=1
-PEAKCUTOFF=2
-MINLEN=50
-MAXGAP=200
+RRACUTOFF=1 # this is upstream RRALOGFDR, stringent cutoff will no show extra peaks at region.bedgraph level
+MINSGRNA=3
+RRALOGFDR=0.1 # this is the same as -log(RRACUTOFF). need to merge this with RRACUTOFF ## TODO.
+MINLEN=1000
+
+#PEAKCUTOFF=2
+#MINLEN=50
+#MAXGAP=200
 
 ## Hardcoded paramters
 SGRNAKW="test"  ## keywords used to grep from sgRNA for the designed ones. 
@@ -45,17 +49,14 @@ do
 		d) DIRECTION=$OPTARG;; 	# set to 1 to get only enriched sgRNA in fg. -1 for only depleted sgRNA. Default=1.
 		m) METHOD=$OPTARG;; 	# method used to call aggregate pvalue from pooled sgRNA pvalues. Choose from [RRA,min,geom.mean,median,stuart]. Default=RRA
 		a) RRACUTOFF=$OPTARG;;  # pval cutoff for crest-seq signal in defined region using robust ranking aggregation test. Default=1.
-		c) PEAKCUTOFF=$OPTARG;; # pval cutoff for final peaks from macs2. Default=2. (2 means 1e-2, ie, 0.01)
-		l) MINLEN=$OPTARG;; 	# min length of final peaks from macs2. Default=50.
-		g) MAXGAP=$OPTARG;; 	# max gap between signals to call final peaks from macs2. Default=200.
+		c) MINSGRNA=$OPTARG;;	# each bin >= $MINSGRNA positive sgRNA to be included in peak calling. Default=3.
+		g) RRALOGFDR=$OPTARG;; 	# each bin has log(FDR) >= $RRALOGFDR to be included in peak calling. Default=0.1.
+		l) MINLEN=$OPTARG;; 	# min length of final peaks. Default=1000.
 		\?) echo "Invalid option: -$OPTARG" 1>&2; exit 1;;
 	esac
 done
 
-
 ## Check arguments
-
-
 ## start run
 echo "CRISPY started runing ..."
 echo "./crispy $@"
@@ -84,20 +85,26 @@ echo "######### 2. sgRNA signals -> target region signals ... #########"
 paste -d"\t" <(cut -f1-3 $sgrnaSignal) <(cut -f4 $sgrnaSignal| ./bin/val2rank.py -nr) > tmp.3
 # put sgRNA ranks into region bins
 intersectBed -a $INREGION -b tmp.3 -wa -wb | ./bin/collapseBed -c 7 -o "list" -q  > tmp.4
-./bin/rra.R --inFile="tmp.4" --outFile="tmp.5" --method=$METHOD
+./bin/rra.R --inFile="tmp.4" --outFile="tmp.5" --method=$METHOD --minSgRNA=$MINSGRNA
 # convert and filter pvalues of region bins to signals. 
 regionSignal="$OUTDIR/$PREFIX.region.bedgraph"
 tail -n+2 tmp.5 | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v OFS="\t" '{if($4<RRACUTOFF){$4=-log($4); print}}' | ./bin/mySortBed > $regionSignal
 echo 
 
-## macs2 for peak smoothing
+### macs2 for peak smoothing ### remove this step for now. Try something else for peak calling. 
+#echo "######### 3. target region signals -> peak smoothing ... #########"
+### fill 0s for macs2
+#subtractBed -a $INREGION -b $regionSignal | awk '{print $0"\t"0}' | cat - $regionSignal | ./bin/mySortBed > tmp; mv tmp $regionSignal
+### call peaks
+#peakSignal="$OUTDIR/$PREFIX.peak.bedgraph"
+#macs2 bdgpeakcall -i $regionSignal -l $MINLEN -g $MAXGAP -c $PEAKCUTOFF -o /dev/stdout | tail -n+2 | cut -f1-3,5 > $peakSignal
+
+### use inhouse script for merging. curated from CREST-seq code. ###
 echo "######### 3. target region signals -> peak smoothing ... #########"
-## fill 0s for macs2
-subtractBed -a $INREGION -b $regionSignal | awk '{print $0"\t"0}' | cat - $regionSignal | ./bin/mySortBed > tmp; mv tmp $regionSignal
-## call peaks
 peakSignal="$OUTDIR/$PREFIX.peak.bedgraph"
-macs2 bdgpeakcall -i $regionSignal -l $MINLEN -g $MAXGAP -c $PEAKCUTOFF -o /dev/stdout | tail -n+2 | cut -f1-3,5 > $peakSignal
+
+awk -v MINSGRNA=$MINSGRNA -v RRALOGFDR=$RRALOGFDR -v OFS="\t" '{if($4>=RRALOGFDR && $5>=MINSGRNA){print $1,$2,$3,$4}}' $regionSignal | ./bin/mySortBed | mergeBed -c 4 -o max | awk -v MINLEN=$MINLEN -v OFS="\t" '{if($3-$2<=MINLEN){center=int(($2+$3)/2+0.5);ext=int(MINLEN/2+0.5); $2=center-ext; $3=center+ext}; print}' | mergeBed -c 4 -o sum > $peakSignal
+
+## clean up
 rm tmp.{1,2,3,4,5}
 echo -e "Crispy Done!\n\n\n"
-
-

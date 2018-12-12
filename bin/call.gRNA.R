@@ -84,7 +84,7 @@ message = paste0("using infile = ", inFile, "\n",
 cat(message)
 
 ####################### debug input start from here. #######################
-#debug
+#debug1
 # setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 # inFile = "../demos/d1.Yarui/data.tsv"
 # fgs=c("cis1","cis2","cis3","cis4","cis5")
@@ -93,7 +93,8 @@ cat(message)
 # min_cpm = 5
 # min_cpm_ratio = 0.5
 # 
-
+#debug2
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 # inFile = "../demos/d2.SOX2/reads.tsv"
 # bgs=c("S1.Unsorted","S2.Unsorted")
 # fgs=c("S1.GpMn","S2.GpMn")

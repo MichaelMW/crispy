@@ -40,16 +40,26 @@ if(is.null(argsL$method)) {
   method = "RRA"
   }
 
+
+############### parameters for debug #############
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+# inFile = "../demos/debug/tmp.4"
+# method = "RRA"
+
 ################ read and convert data #############
 dat = read.table(inFile)
 loci = paste(dat[,1], dat[,2], dat[,3], sep="_")
 signalLists = dat[,4] ## -log(pval) * sign(log(fg/bg))  ## so the higher is stronger enrichment in fg.  
 signalLists = lapply(strsplit(as.character(signalLists), ","), unlist)
 df <- plyr::ldply(signalLists, rbind)
-mat <- as.matrix(df, nrow = 10)
+mat <- as.matrix(df)
 mat2 <- apply(mat, 2, as.numeric)
 rownames(mat2) = loci
 ################ run rra ##############
-results <- aggregateRanks(rmat = mat2, method = method)
+results <- aggregateRanks(rmat = mat2, method = method, full=T)
+CountSgRNA = rowSums(!is.na(mat2))
+results$Count = CountSgRNA
+results <- subset(results, Score<1)
+results$Score = p.adjust(results$Score, method = "fdr") # change the pval score to FDR
 results <- subset(results, Score<1)
 write.table(format(results,digits =4), file=outFile, quote=FALSE, sep='\t', row.names = F)

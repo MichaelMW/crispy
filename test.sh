@@ -21,17 +21,6 @@ rm -rf "results.test"
             -f "cis1,cis2,cis3,cis4,cis5" \
 			-t "png" 
 
-# default CPM filter cutoff
-./crispy.sh -i demos/d1.Yarui/data.tsv \
-            -r demos/d1.Yarui/regions.bed \
-            -s demos/d1.Yarui/oligos.tsv \
-            -o "results.test" \
-            -p "cis_depleted" \
-            -b "ctr1,ctr2" \
-            -f "cis1,cis2,cis3,cis4,cis5" \
-			-t "png" \
-			-d -1
-
 # sox2
 ./crispy.sh -i demos/d2.SOX2/reads.tsv \
             -r demos/d2.SOX2/regions.bed \
