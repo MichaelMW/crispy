@@ -18,9 +18,8 @@ PLOTFORMAT="PDF"
 NBCUTOFF=0.05
 DIRECTION=1
 METHOD="RRA"
-RRACUTOFF=1 # this is upstream RRALOGFDR, stringent cutoff will no show extra peaks at region.bedgraph level
-MINSGRNA=3
-RRALOGFDR=0.1 # this is the same as -log(RRACUTOFF). need to merge this with RRACUTOFF ## TODO.
+RRACUTOFF=1
+MINSGRNA=2
 MINLEN=1000
 
 #PEAKCUTOFF=2
@@ -31,7 +30,7 @@ MINLEN=1000
 SGRNAKW="test"  ## keywords used to grep from sgRNA for the designed ones. 
 
 ## Get arguments
-while getopts ":i:r:s:o:p:b:f:q:t:u:v:n:d:m:a:c:l:g" opt;
+while getopts ":i:r:s:o:p:b:f:q:t:u:v:n:d:m:a:c:l" opt;
 do
 	case "$opt" in
 		i) INREAD=$OPTARG;; 	# input read number for each sgRNA. (id name should match $INSGRNA)
@@ -48,9 +47,8 @@ do
 		n) NBCUTOFF=$OPTARG;;  	# pval cutoff for sgRNA using negative bionomial test. Default=0.05.
 		d) DIRECTION=$OPTARG;; 	# set to 1 to get only enriched sgRNA in fg. -1 for only depleted sgRNA. Default=1.
 		m) METHOD=$OPTARG;; 	# method used to call aggregate pvalue from pooled sgRNA pvalues. Choose from [RRA,min,geom.mean,median,stuart]. Default=RRA
-		a) RRACUTOFF=$OPTARG;;  # pval cutoff for crest-seq signal in defined region using robust ranking aggregation test. Default=1.
-		c) MINSGRNA=$OPTARG;;	# each bin >= $MINSGRNA positive sgRNA to be included in peak calling. Default=3.
-		g) RRALOGFDR=$OPTARG;; 	# each bin has log(FDR) >= $RRALOGFDR to be included in peak calling. Default=0.1.
+		a) RRACUTOFF=$OPTARG;;  # pval cutoff for crest-seq signal to be retained in region and peak. Default=1.
+		c) MINSGRNA=$OPTARG;;	# each bin >= $MINSGRNA positive sgRNA to be included in peak calling. Default=2.
 		l) MINLEN=$OPTARG;; 	# min length of final peaks. Default=1000.
 		\?) echo "Invalid option: -$OPTARG" 1>&2; exit 1;;
 	esac
@@ -68,7 +66,12 @@ echo "######### 1. read counts -> sgRNA signals ... #########"
 ## sgRNA -> sgRNA signals in loci
 #echo "######### getting sgRNA signal from pvalues ... #########"
 pvalTsv="$OUTDIR/$PREFIX.sgRNA.tsv"  # from last step
-sgrnaSignal="$OUTDIR/$PREFIX.sgRNA.bedgraph" # output of this step, good for visualizing all sgRNA signals.
+sgrnaSignal="$OUTDIR/$PREFIX.sgRNA.bedgraph" # output of this step, good for visualizing "good" sgRNA signals.
+sgrnaSignalAll="$OUTDIR/$PREFIX.sgRNA_all.bedgraph" # output of this step, good for visualizing "all" sgRNA signals.
+
+## all sgRNA
+tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v OFS="\t" '{if($NF==kw){print $1, -log($5)*(($2>0)-0.5)*2}}' > tmp.1.all
+## good sgRNA
 if [ "$DIRECTION" -eq -1 ]; then
 	echo "DIRECTION==-1, using only depleted sgRNA ..."
 	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2<0){print $1, -log($5)}}' > tmp.1
@@ -76,8 +79,11 @@ else
 	echo "DIRECTION==1, using only enriched sgRNA ..."
 	tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v nbcutoff=$NBCUTOFF -v OFS="\t" '{if($NF==kw && $5<nbcutoff && $2>0){print $1, -log($5)}}' > tmp.1
 fi
+
 awk '{print $4"\t"$1"_"$2"_"$3}' $INSGRNA > tmp.2
 ./bin/rp tmp.1 tmp.2 | tr "_" "\t" > $sgrnaSignal
+./bin/rp tmp.1.all tmp.2 | tr "_" "\t" > $sgrnaSignalAll
+
 echo
 
 ## sgRNA signals -> target region signals
@@ -88,7 +94,7 @@ intersectBed -a $INREGION -b tmp.3 -wa -wb | ./bin/collapseBed -c 7 -o "list" -q
 ./bin/rra.R --inFile="tmp.4" --outFile="tmp.5" --method=$METHOD --minSgRNA=$MINSGRNA
 # convert and filter pvalues of region bins to signals. 
 regionSignal="$OUTDIR/$PREFIX.region.bedgraph"
-tail -n+2 tmp.5 | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v OFS="\t" '{if($4<RRACUTOFF){$4=-log($4); print}}' | ./bin/mySortBed > $regionSignal
+tail -n+2 tmp.5 | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v MINSGRNA=$MINSGRNA -v OFS="\t" '{if($4<RRACUTOFF && $5>= MINSGRNA){$4=-log($4); print}}' | ./bin/mySortBed > $regionSignal
 echo 
 
 ### macs2 for peak smoothing ### remove this step for now. Try something else for peak calling. 
@@ -102,9 +108,9 @@ echo
 ### use inhouse script for merging. curated from CREST-seq code. ###
 echo "######### 3. target region signals -> peak smoothing ... #########"
 peakSignal="$OUTDIR/$PREFIX.peak.bedgraph"
-
-awk -v MINSGRNA=$MINSGRNA -v RRALOGFDR=$RRALOGFDR -v OFS="\t" '{if($4>=RRALOGFDR && $5>=MINSGRNA){print $1,$2,$3,$4}}' $regionSignal | ./bin/mySortBed | mergeBed -c 4 -o max | awk -v MINLEN=$MINLEN -v OFS="\t" '{if($3-$2<=MINLEN){center=int(($2+$3)/2+0.5);ext=int(MINLEN/2+0.5); $2=center-ext; $3=center+ext}; print}' | mergeBed -c 4 -o sum > $peakSignal
+# merge to MINLEN and sum signals at each peak.
+mergeBed -i $regionSignal -c 4 -o max | awk -v MINLEN=$MINLEN -v OFS="\t" '{if($3-$2<=MINLEN){center=int(($2+$3)/2+0.5);ext=int(MINLEN/2+0.5); $2=center-ext; $3=center+ext}; print}' | mergeBed -c 4 -o sum > $peakSignal
 
 ## clean up
-rm tmp.{1,2,3,4,5}
+#rm tmp.{1,2,3,4,5}*
 echo -e "Crispy Done!\n\n\n"

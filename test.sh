@@ -31,3 +31,21 @@ rm -rf "results.test"
             -f "S1.GnMp,S1.GpMn,S2.GnMp,S2.GpMn" \
 			-t "png"
 
+./crispy.sh -i demos/d2.SOX2/reads.tsv \
+            -r demos/d2.SOX2/regions.bed \
+            -s demos/d2.SOX2/oligos.tsv \
+            -o "results.test" \
+            -p "tiling_gfp" \
+            -b "S1.Unsorted,S2.Unsorted" \
+            -f "S1.GpMn,S2.GpMn" \
+			-t "png"
+
+./crispy.sh -i demos/d2.SOX2/reads.tsv \
+            -r demos/d2.SOX2/regions.bed \
+            -s demos/d2.SOX2/oligos.tsv \
+            -o "results.test" \
+            -p "tiling_mcherry" \
+            -b "S1.Unsorted,S2.Unsorted" \
+            -f "S1.GnMp,S2.GnMp" \
+			-t "png"
+
