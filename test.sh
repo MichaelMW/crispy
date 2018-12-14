@@ -29,7 +29,8 @@ rm -rf "results.test"
             -p "tiling_4fg" \
             -b "S1.Unsorted,S2.Unsorted" \
             -f "S1.GnMp,S1.GpMn,S2.GnMp,S2.GpMn" \
-			-t "png"
+			-t "png" \
+			-n 0.092
 
 ./crispy.sh -i demos/d2.SOX2/reads.tsv \
             -r demos/d2.SOX2/regions.bed \
@@ -38,7 +39,8 @@ rm -rf "results.test"
             -p "tiling_gfp" \
             -b "S1.Unsorted,S2.Unsorted" \
             -f "S1.GpMn,S2.GpMn" \
-			-t "png"
+			-t "png" \
+			-n 0.059
 
 ./crispy.sh -i demos/d2.SOX2/reads.tsv \
             -r demos/d2.SOX2/regions.bed \
@@ -47,5 +49,6 @@ rm -rf "results.test"
             -p "tiling_mcherry" \
             -b "S1.Unsorted,S2.Unsorted" \
             -f "S1.GnMp,S2.GnMp" \
-			-t "png"
+			-t "png" \
+			-n 0.059
 
