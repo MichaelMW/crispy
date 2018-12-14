@@ -20,6 +20,7 @@ A lightweight versatile pipeline for crispr-screening analysis.
 ## history
 * v1.4:
  	* final peak calling using in-house script replicating CREST-seq
+	* included an "sgRNA_all.bedgraph" track in the output
 * v1.3.8:
  	* Included FDR guideline for "-n" pvalue cutoff choice. 
 * v1.3.7:
