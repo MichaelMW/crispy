@@ -18,6 +18,10 @@ A lightweight versatile pipeline for crispr-screening analysis.
 * automate read counts and QC
 
 ## history
+* v1.4:
+ 	* final peak calling using in-house script replicating CREST-seq
+* v1.3.8:
+ 	* Included FDR guideline for "-n" pvalue cutoff choice. 
 * v1.3.7:
 	* Highlight positive sgRNA based on -n and -d		
 * v1.3.6:
