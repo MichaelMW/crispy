@@ -11,15 +11,15 @@
 
 rm -rf "results.test"
 
-# default CPM filter cutoff
-./crispy.sh -i demos/d1.Yarui/data.tsv \
-            -r demos/d1.Yarui/regions.bed \
-            -s demos/d1.Yarui/oligos.tsv \
-            -o "results.test" \
-            -p "cis_enriched" \
-            -b "ctr1,ctr2" \
-            -f "cis1,cis2,cis3,cis4,cis5" \
-			-t "png" 
+## default CPM filter cutoff
+#./crispy.sh -i demos/d1.Yarui/data.tsv \
+#            -r demos/d1.Yarui/regions.bed \
+#            -s demos/d1.Yarui/oligos.tsv \
+#            -o "results.test" \
+#            -p "cis_enriched" \
+#            -b "ctr1,ctr2" \
+#            -f "cis1,cis2,cis3,cis4,cis5" \
+#			-t "png" 
 
 # sox2
 ./crispy.sh -i demos/d2.SOX2/reads.tsv \
@@ -30,7 +30,7 @@ rm -rf "results.test"
             -b "S1.Unsorted,S2.Unsorted" \
             -f "S1.GnMp,S1.GpMn,S2.GnMp,S2.GpMn" \
 			-t "png" \
-			-n 0.092
+			-n 0.13
 
 ./crispy.sh -i demos/d2.SOX2/reads.tsv \
             -r demos/d2.SOX2/regions.bed \
@@ -40,7 +40,7 @@ rm -rf "results.test"
             -b "S1.Unsorted,S2.Unsorted" \
             -f "S1.GpMn,S2.GpMn" \
 			-t "png" \
-			-n 0.059
+			-n 0.12
 
 ./crispy.sh -i demos/d2.SOX2/reads.tsv \
             -r demos/d2.SOX2/regions.bed \
@@ -50,5 +50,5 @@ rm -rf "results.test"
             -b "S1.Unsorted,S2.Unsorted" \
             -f "S1.GnMp,S2.GnMp" \
 			-t "png" \
-			-n 0.059
+			-n 0.12
 

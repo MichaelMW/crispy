@@ -44,6 +44,7 @@ if(is.null(argsL$method)) {
 ############### parameters for debug #############
 # setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 # inFile = "../demos/debug/tmp.4"
+# inFile = "../tmp.4"
 # method = "RRA"
 
 ################ read and convert data #############
@@ -56,10 +57,12 @@ mat <- as.matrix(df)
 mat2 <- apply(mat, 2, as.numeric)
 rownames(mat2) = loci
 ################ run rra ##############
-results <- aggregateRanks(rmat = mat2, method = method, full=T)
-CountSgRNA = rowSums(!is.na(mat2))
-results$Count = CountSgRNA
-results <- subset(results, Score<1)
-results$Score = p.adjust(results$Score, method = "fdr") # change the pval score to FDR
-results <- subset(results, Score<1)
-write.table(format(results,digits =4), file=outFile, quote=FALSE, sep='\t', row.names = F)
+rraResult <- aggregateRanks(rmat = mat2, method = method, full=T)
+CountSgRNA = data.frame(rowSums(!is.na(mat2)))
+#results$Count = CountSgRNA
+result = merge(rraResult, CountSgRNA, by = 0)[,-1]
+colnames(result)=c("Name","Score","Count")
+result <- subset(result, Score<1)
+result$Score = p.adjust(result$Score, method = "fdr") # change the pval score to FDR
+result <- subset(result, Score<1)
+write.table(format(result,digits =4), file=outFile, quote=FALSE, sep='\t', row.names = F)
