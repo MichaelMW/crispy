@@ -7,7 +7,7 @@
             -r demos/d2.SOX2/regions.bed \
             -s demos/d2.SOX2/oligos.tsv \
             -o results.SOX2 \
-			-n 1 \
+			-n 0.13 \
             -p "tiling_GFP" \
             -b "S1.Unsorted,S2.Unsorted" \
             -f "S1.GpMn,S2.GpMn"\
@@ -18,7 +18,7 @@
             -r demos/d2.SOX2/regions.bed \
             -s demos/d2.SOX2/oligos.tsv \
             -o results.SOX2 \
-			-n 1 \
+			-n 0.13 \
             -p "tiling_mCherry" \
             -b "S1.Unsorted,S2.Unsorted" \
             -f "S1.GnMp,S2.GnMp"\
