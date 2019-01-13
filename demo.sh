@@ -14,19 +14,20 @@ rm -rf "results.Yarui"
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
-            -o results.Yarui \
+            -o results.demo \
             -p "cis_loose" \
             -b "ctr1,ctr2" \
             -f "cis1,cis2,cis3,cis4,cis5" \
            	-n 0.1 \
-           	-c 1
+           	-c 1\
+			-t png 
 
 ## demo2
 # stringent pvalue cutoff
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
-            -o results.Yarui \
+            -o results.demo \
             -p "cis_stringent" \
             -b "ctr1,ctr2" \
             -f "cis1,cis2,cis3,cis4,cis5" \
@@ -39,7 +40,7 @@ rm -rf "results.Yarui"
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
-            -o results.Yarui \
+            -o results.demo \
             -p "cis_stringent_qnorm" \
             -b "ctr1,ctr2" \
             -f "cis1,cis2,cis3,cis4,cis5" \
@@ -54,7 +55,7 @@ rm -rf "results.Yarui"
 ./crispy.sh -i demos/d1.Yarui/data.tsv \
             -r demos/d1.Yarui/regions.bed \
             -s demos/d1.Yarui/oligos.tsv \
-            -o results.Yarui \
+            -o results.demo \
             -p "cis_noRep_depletion" \
             -b "ctr1" \
             -f "cis1" \

@@ -21,34 +21,48 @@ rm -rf "results.test"
 #            -f "cis1,cis2,cis3,cis4,cis5" \
 #			-t "png" 
 
+#sin3a
+./crispy.sh -i demos/d4.SIN3A/sin3a_ipsc_reads_3L_3R_12262018.tsv \
+            -r demos/d4.SIN3A/sin3a_regions.bed \
+            -s demos/d4.SIN3A/sin3a_oligos.tsv \
+            -o "results.test" \
+            -p "cis_29_34" \
+            -b "XR029,XR034" \
+			-f "XR032,XR037,XR031,XR036" \
+			-q "XR029,XR034;XR030,XR035;XR032,XR037,XR031,XR036" \
+			-n 0.025 \
+			-c 2 \
+            -t "png"
+
+
 # sox2
-./crispy.sh -i demos/d2.SOX2/reads.tsv \
-            -r demos/d2.SOX2/regions.bed \
-            -s demos/d2.SOX2/oligos.tsv \
-            -o "results.test" \
-            -p "tiling_4fg" \
-            -b "S1.Unsorted,S2.Unsorted" \
-            -f "S1.GnMp,S1.GpMn,S2.GnMp,S2.GpMn" \
-			-t "png" \
-			-n 0.13
+# ./crispy.sh -i demos/d2.SOX2/reads.tsv \
+#             -r demos/d2.SOX2/regions.bed \
+#             -s demos/d2.SOX2/oligos.tsv \
+#             -o "results.test" \
+#             -p "tiling_4fg" \
+#             -b "S1.Unsorted,S2.Unsorted" \
+#             -f "S1.GnMp,S1.GpMn,S2.GnMp,S2.GpMn" \
+# 			-t "png" \
+# 			-n 0.13
 
-./crispy.sh -i demos/d2.SOX2/reads.tsv \
-            -r demos/d2.SOX2/regions.bed \
-            -s demos/d2.SOX2/oligos.tsv \
-            -o "results.test" \
-            -p "tiling_gfp" \
-            -b "S1.Unsorted,S2.Unsorted" \
-            -f "S1.GpMn,S2.GpMn" \
-			-t "png" \
-			-n 0.12
+# ./crispy.sh -i demos/d2.SOX2/reads.tsv \
+#             -r demos/d2.SOX2/regions.bed \
+#             -s demos/d2.SOX2/oligos.tsv \
+#             -o "results.test" \
+#             -p "tiling_gfp" \
+#             -b "S1.Unsorted,S2.Unsorted" \
+#             -f "S1.GpMn,S2.GpMn" \
+# 			-t "png" \
+# 			-n 0.12
 
-./crispy.sh -i demos/d2.SOX2/reads.tsv \
-            -r demos/d2.SOX2/regions.bed \
-            -s demos/d2.SOX2/oligos.tsv \
-            -o "results.test" \
-            -p "tiling_mcherry" \
-            -b "S1.Unsorted,S2.Unsorted" \
-            -f "S1.GnMp,S2.GnMp" \
-			-t "png" \
-			-n 0.12
+# ./crispy.sh -i demos/d2.SOX2/reads.tsv \
+#             -r demos/d2.SOX2/regions.bed \
+#             -s demos/d2.SOX2/oligos.tsv \
+#             -o "results.test" \
+#             -p "tiling_mcherry" \
+#             -b "S1.Unsorted,S2.Unsorted" \
+#             -f "S1.GnMp,S2.GnMp" \
+# 			-t "png" \
+# 			-n 0.12
 

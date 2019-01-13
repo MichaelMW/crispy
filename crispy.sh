@@ -112,5 +112,5 @@ peakSignal="$OUTDIR/$PREFIX.peak.bedgraph"
 mergeBed -i $regionSignal -c 4 -o max | awk -v MINLEN=$MINLEN -v OFS="\t" '{if($3-$2<=MINLEN){center=int(($2+$3)/2+0.5);ext=int(MINLEN/2+0.5); $2=center-ext; $3=center+ext}; print}' | mergeBed -c 4 -o sum > $peakSignal
 
 ## clean up
-#rm tmp.{1,2,3,4,5}*
+rm tmp.{1,2,3,4,5}*
 echo -e "Crispy Done!\n\n\n"
