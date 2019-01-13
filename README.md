@@ -4,7 +4,7 @@ A lightweight versatile pipeline for crispr-screening analysis.
 ## Features
 * supports both single sgRNA and tiling methods and their derivatives. 
 * comprehensive QC
-![QC plot](https://github.com/MichaelMW/crispy/tree/master/results.demo/cis_stringent.qc.png "QC plot")
+![QC plot](https://github.com/MichaelMW/crispy/blob/master/results.demo/cis_loose.qc.png "QC plot")
 * more fine-tuned controls
 	* various choice of normalization
 	* various statistical model
