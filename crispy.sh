@@ -62,10 +62,20 @@ echo "./crispy $@"
 echo "######### 0. checking parameters #########"
 ## check on negative label:
 if grep -q "negative" "$INREAD"; then
-	echo "negative label successfully found in reads file: $INREAD"
+	echo "SUCCESS: negative label successfully found in reads file: $INREAD"
 else
-	echo "In order for the sgRNA FDR calculation to work, you need to label 'negative' in your reads file for the control sgRNAs: $INREAD"
+	echo "FAILED: In order for the sgRNA FDR calculation to work, you need to label 'negative' in your reads file for the control sgRNAs: $INREAD"
 	exit
+fi
+## curate input files for "^M" label. (Rare, but it happened ...)
+if grep -r $'\r' $INREAD; then
+	tr $'\r' "\n" < $INREAD > tmp; mv tmp $INREAD
+fi
+if grep -r $'\r' $INREGION; then
+    tr $'\r' "\n" < $INREGION > tmp; mv tmp $INREGION
+fi
+if grep -r $'\r' $INSGRNA; then
+    tr $'\r' "\n" < $INSGRNA > tmp; mv tmp $INSGRNA
 fi
 
 ## reads -> sgRNA
@@ -106,14 +116,7 @@ regionSignal="$OUTDIR/$PREFIX.region.bedgraph"
 tail -n+2 tmp.5 | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v MINSGRNA=$MINSGRNA -v OFS="\t" '{if($4<RRACUTOFF && $5>= MINSGRNA){$4=-log($4); print}}' | ./bin/mySortBed > $regionSignal
 echo 
 
-### macs2 for peak smoothing ### remove this step for now. Try something else for peak calling. 
 #echo "######### 3. target region signals -> peak smoothing ... #########"
-### fill 0s for macs2
-#subtractBed -a $INREGION -b $regionSignal | awk '{print $0"\t"0}' | cat - $regionSignal | ./bin/mySortBed > tmp; mv tmp $regionSignal
-### call peaks
-#peakSignal="$OUTDIR/$PREFIX.peak.bedgraph"
-#macs2 bdgpeakcall -i $regionSignal -l $MINLEN -g $MAXGAP -c $PEAKCUTOFF -o /dev/stdout | tail -n+2 | cut -f1-3,5 > $peakSignal
-
 ### use inhouse script for merging. curated from CREST-seq code. ###
 echo "######### 3. target region signals -> peak smoothing ... #########"
 peakSignal="$OUTDIR/$PREFIX.peak.bedgraph"
@@ -121,5 +124,5 @@ peakSignal="$OUTDIR/$PREFIX.peak.bedgraph"
 mergeBed -i $regionSignal -c 4 -o max | awk -v MINLEN=$MINLEN -v OFS="\t" '{if($3-$2<=MINLEN){center=int(($2+$3)/2+0.5);ext=int(MINLEN/2+0.5); $2=center-ext; $3=center+ext}; print}' | mergeBed -c 4 -o sum > $peakSignal
 
 ## clean up
-rm tmp.{1,2,3,4,5}*
+#rm tmp.{1,2,3,4,5}*
 echo -e "Crispy Done!\n\n\n"

@@ -26,15 +26,15 @@ if("--help" %in% args) {
 	Arguments:
 	--inFile=[inFile.tsv, please include a header]
 	--fg=[colomn names as foreground/test group, eg. 'exp1,exp2']
-  --bg=[colomn names as background/control group, eg. 'exp3,exp4']
-  --min_cpm=[minimal read count cutoff for sgRNA to be deemed as express. Use 0 to disable this filter. Default:5]
-  --min_cpm_ratio=[minimal ratio of FGs or BGs that have sgRNA read count higher than MINCPM. Use 0 to disable this filter. Default:0.5]
-  --qnorm=[0 for no quantile normalization and 1 for separate qnorm within fgs and within bgs. Or you can specify by providing the column names, eg. '-q cis1,cis2;ctr1,ctr2;high1,high2' . Default:0.]
-  --pvalCut =[Use this cutoff to highlight positive sgRNAs passing the filter. No highlight if FALSE. Default:F]
-  --direction = [1 or -1. If pvalCut exists, use this cutoff to highlight positive sgRNAs passing the filter. No highlight if FALSE. Default:1 ]
-  --outDir=[name of output dir]
-  --prefix=[optional prefix for each file name. eg.'GPF+mCherry-']
-  --plotFormat=[pdf or png. default=pdf.]
+	--bg=[colomn names as background/control group, eg. 'exp3,exp4']
+	--min_cpm=[minimal read count cutoff for sgRNA to be deemed as express. Use 0 to disable this filter. Default:5]
+	--min_cpm_ratio=[minimal ratio of FGs or BGs that have sgRNA read count higher than MINCPM. Use 0 to disable this filter. Default:0.5]
+	--qnorm=[0 for no quantile normalization and 1 for separate qnorm within fgs and within bgs. Or you can specify by providing the column names, eg. '-q cis1,cis2;ctr1,ctr2;high1,high2' . Default:0.]
+	--pvalCut =[Use this cutoff to highlight positive sgRNAs passing the filter. No highlight if FALSE. Default:F]
+	--direction = [1 or -1. If pvalCut exists, use this cutoff to highlight positive sgRNAs passing the filter. No highlight if FALSE. Default:1 ]
+	--outDir=[name of output dir]
+	--prefix=[optional prefix for each file name. eg.'GPF+mCherry-']
+	--plotFormat=[pdf or png. default=pdf.]
 	--help
 
 	Example:
