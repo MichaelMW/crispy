@@ -54,10 +54,19 @@ do
 	esac
 done
 
-## Check arguments
 ## start run
 echo "CRISPY started runing ..."
 echo "./crispy $@"
+
+## Check arguments
+echo "######### 0. checking parameters #########"
+## check on negative label:
+if grep -q "negative" "$INREAD"; then
+	echo "negative label successfully found in reads file: $INREAD"
+else
+	echo "In order for the sgRNA FDR calculation to work, you need to label 'negative' in your reads file for the control sgRNAs: $INREAD"
+	exit
+fi
 
 ## reads -> sgRNA
 echo "######### 1. read counts -> sgRNA signals ... #########"
