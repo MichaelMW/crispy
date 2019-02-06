@@ -120,18 +120,24 @@ echo "######### 2. sgRNA signals -> target region signals ... #########"
 paste -d"\t" <(cut -f1-3 $sgrnaSignal) <(cut -f4 $sgrnaSignal| ./bin/val2rank.py -nr) > tmp.3
 # put sgRNA ranks into region bins
 intersectBed -a $INREGION -b tmp.3 -wa -wb | ./bin/collapseBed -c 7 -o "list" -q  > tmp.4
+intersectBed -a tmp.4.fc -b tmp.3 -wa -wb | ./bin/collapseBed -c 7 -o "list" -q  > tmp.4.hres
 ./bin/rra.R --inFile="tmp.4" --outFile="tmp.5" --method=$METHOD --minSgRNA=$MINSGRNA
+./bin/rra.R --inFile="tmp.4.hres" --outFile="tmp.5.hres" --method=$METHOD --minSgRNA=$MINSGRNA
 # convert and filter pvalues of region bins to signals. 
 regionSignal="$OUTDIR/$PREFIX.region.bedgraph"
+regionSignalHres="$OUTDIR/$PREFIX.region.hres.bedgraph"
 tail -n+2 tmp.5 | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v MINSGRNA=$MINSGRNA -v OFS="\t" '{if($4<=RRACUTOFF && $5>= MINSGRNA){$4=-log($4); print}}' | ./bin/mySortBed > $regionSignal
+tail -n+2 tmp.5.hres | tr "_" "\t" | awk -v RRACUTOFF=$RRACUTOFF -v MINSGRNA=$MINSGRNA -v OFS="\t" '{if($4<=RRACUTOFF && $5>= MINSGRNA){$4=-log($4); print}}' | ./bin/mySortBed > $regionSignalHres
 echo 
 
 #echo "######### 3. target region signals -> peak smoothing ... #########"
 ### use inhouse script for merging. curated from CREST-seq code. ###
 echo "######### 3. target region signals -> peak smoothing ... #########"
 peakSignal="$OUTDIR/$PREFIX.peak.bedgraph"
+#peakSignalHres="$OUTDIR/$PREFIX.peak.hres.bedgraph"
 # merge to MINLEN and sum signals at each peak.
 mergeBed -i $regionSignal -c 4 -o max | awk -v MINLEN=$MINLEN -v OFS="\t" '{if($3-$2<=MINLEN){center=int(($2+$3)/2+0.5);ext=int(MINLEN/2+0.5); $2=center-ext; $3=center+ext}; print}' | mergeBed -c 4 -o sum > $peakSignal
+#mergeBed -i $regionSignalHres -c 4 -o max | awk -v MINLEN=$MINLEN -v OFS="\t" '{if($3-$2<=MINLEN){center=int(($2+$3)/2+0.5);ext=int(MINLEN/2+0.5); $2=center-ext; $3=center+ext}; print}' | mergeBed -c 4 -o sum > $peakSignalHres
 
 ## clean up
 rm tmp.{1,2,3,4,5}*

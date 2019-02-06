@@ -17,20 +17,7 @@
             -e -0.5\
             -t png
 
-## Dppa2 has very sparse sgRNA
-./crispy.sh -i demos/d6.Dppa2/reads.tsv \
-            -r demos/d6.Dppa2/region.bed \
-            -s demos/d6.Dppa2/oligos.tsv \
-            -o results.test \
-            -p "dppa2" \
-            -b "U1,U2,Ck1,Ck2" \
-            -f "Mn1,Mn2" \
-            -n 0.05 \
-            -c 1\
-            -t png
-
-
-## how about using this n=1 for Esrrb and Dppa2?
+## how about using this n=1 for analysis?
 ## Dppa2
 ./crispy.sh -i demos/d6.Dppa2/reads.tsv \
             -r demos/d6.Dppa2/region.bed \
@@ -42,6 +29,7 @@
             -n 1 \
             -c 2\
             -t png
+
 ## Esrrb
 ./crispy.sh -i demos/d5.Esrrb/reads.tsv \
             -r demos/d5.Esrrb/regions.tile.bed \
@@ -64,3 +52,27 @@
             -n 1 \
             -c 1 \
             -t png
+
+## Sox2
+./crispy.sh -i demos/d2.SOX2/reads.tsv \
+            -r demos/d2.SOX2/regions.bed \
+            -s demos/d2.SOX2/oligos.tsv \
+            -o results.test \
+            -p "Sox2_all_M" \
+            -b "U1,U2" \
+            -f "M1,M2" \
+            -n 1 \
+            -c 2 \
+            -t png
+
+./crispy.sh -i demos/d2.SOX2/reads.tsv \
+            -r demos/d2.SOX2/regions.bed \
+            -s demos/d2.SOX2/oligos.tsv \
+            -o results.test \
+            -p "Sox2_all_G" \
+            -b "U1,U2" \
+            -f "G1,G2" \
+            -n 1 \
+            -c 2 \
+            -t png
+

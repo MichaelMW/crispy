@@ -28,8 +28,9 @@ A lightweight versatile pipeline for crispr-screening analysis.
 
 ## history
 * v1.4.2:
-	* included an "fc.bedgraph" fold change track in the output. This is the track for high resolution mean fold change.
-	* counter example updated
+	* included a "fc.bedgraph" fold change track in the output. This is the track for high resolution mean fold change.
+	* included a "region.hres.bedgraph" track in the output. This is the track for high resolution RRA signal.
+	* minor: counter.py example updated
 * v1.4.1:
 	* included an "sgRNA_all.bedgraph" track in the output. This is the track to QC pvalues of all input sgRNAs.
 * v1.4:
