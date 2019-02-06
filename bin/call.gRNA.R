@@ -95,13 +95,12 @@ cat(message)
 # 
 #debug2
 # setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-# inFile = "../demos/d2.SOX2/reads.tsv"
-# bgs=c("S1.Unsorted","S2.Unsorted")
-# fgs=c("S1.GpMn","S2.GpMn")
+# inFile = "../demos/d6.Dppa2/reads.tsv"
+# bgs=c("U1","U2")
+# fgs=c("Mn1","Mn2")
 # qnorm = 0
 # min_cpm = 5
 # min_cpm_ratio = 0.5
-# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 ### hardcoded parameter
 negLabel = "negative"
@@ -256,6 +255,7 @@ if(hasRep==1){
 
 tab = cbind(results$table, status)
 rownames(tab) = dat.filtered[,1]
+tab = tab[order(tab$PValue),]  # sort by pval
 
 ## preview and output
 cat("preview top results:\n")
@@ -304,6 +304,18 @@ pvalDistro <- ggplot(tab_pvals, aes(x=status, y=-log10(PValue))) +
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         panel.background = element_rect(fill = "white",colour = "black"))
+
+# ## plot pval distribution to guide FC cutoff choice. WIP
+# fcDistro <- ggplot(tab_pvals, aes(x=status, y=logFC)) + 
+#   geom_violin() +
+#   geom_boxplot(width = 0.1) +
+#   xlab("sgRNA group") +
+#   ylab("log(FC)") +
+#   scale_y_continuous(breaks=seq(floor(min(tab_pvals$logFC)),max(tab_pvals$logFC),1)) +
+#   theme(panel.grid.major.y = element_line(colour = "black", linetype = "dashed"),
+#         panel.grid.major.x = element_blank(),
+#         panel.grid.minor.x = element_blank(),
+#         panel.background = element_rect(fill = "white",colour = "black"))
 
 ## add pvalue cutoffs guided by FDR in qcutoffs ##
 ## convert qvalue cutoff to the highest pvalue that satifies.

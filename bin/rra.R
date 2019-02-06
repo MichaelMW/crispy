@@ -43,7 +43,6 @@ if(is.null(argsL$method)) {
 
 ############### parameters for debug #############
 # setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-# inFile = "../demos/debug/tmp.4"
 # inFile = "../tmp.4"
 # method = "RRA"
 
@@ -63,6 +62,7 @@ CountSgRNA = data.frame(rowSums(!is.na(mat2)))
 result = merge(rraResult, CountSgRNA, by = 0)[,-1]
 colnames(result)=c("Name","Score","Count")
 result <- subset(result, Score<1)
-result$Score = p.adjust(result$Score, method = "fdr") # change the pval score to FDR
+result$Score = p.adjust(result$Score, method = "fdr") # change the pval score to FDR; But this reduces resolution of region peaks. 
 result <- subset(result, Score<1)
 write.table(format(result,digits =4), file=outFile, quote=FALSE, sep='\t', row.names = F)
+
