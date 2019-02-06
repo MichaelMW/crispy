@@ -27,8 +27,11 @@ A lightweight versatile pipeline for crispr-screening analysis.
 * automate read counts and QC
 
 ## history
+* v1.4.2:
+	* included an "fc.bedgraph" fold change track in the output. This is the track for high resolution mean fold change.
+	* counter example updated
 * v1.4.1:
-	* included an "sgRNA_all.bedgraph" track in the output
+	* included an "sgRNA_all.bedgraph" track in the output. This is the track to QC pvalues of all input sgRNAs.
 * v1.4:
  	* final peak calling using in-house script replicating CREST-seq
 * v1.3.8:
