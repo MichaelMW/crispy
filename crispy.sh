@@ -65,16 +65,10 @@ else
 	echo "FAILED: In order for the sgRNA FDR calculation to work, you need to label 'negative' in your reads file for the control sgRNAs: $INREAD"
 	exit
 fi
-## curate input files for "^M" label. (Rare, but it happened ...)
-if grep -r $'\r' $INREAD; then
-	tr $'\r' "\n" < $INREAD > tmp; mv tmp $INREAD
-fi
-if grep -r $'\r' $INREGION; then
-    tr $'\r' "\n" < $INREGION > tmp; mv tmp $INREGION
-fi
-if grep -r $'\r' $INSGRNA; then
-    tr $'\r' "\n" < $INSGRNA > tmp; mv tmp $INSGRNA
-fi
+## curate input files for "^M" label. (Rare, but it happens ...)
+tr -d '\15\32' <$INREAD > tmp; mv tmp $INREAD
+tr -d '\15\32' <$INREGION > tmp; mv tmp $INREGION
+tr -d '\15\32' <$INSGRNA > tmp; mv tmp $INSGRNA
 
 ## reads -> sgRNA
 echo "######### 1. read counts -> sgRNA signals ... #########"
