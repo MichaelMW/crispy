@@ -115,8 +115,8 @@ paste -d"\t" <(cut -f1-3 $sgrnaSignal) <(cut -f4 $sgrnaSignal| ./bin/val2rank.py
 # put sgRNA ranks into region bins
 intersectBed -a $INREGION -b tmp.3 -wa -wb | ./bin/collapseBed -c 7 -o "list" -q  > tmp.4
 intersectBed -a tmp.4.fc -b tmp.3 -wa -wb | ./bin/collapseBed -c 7 -o "list" -q  > tmp.4.hres
-./bin/rra.R --inFile="tmp.4" --outFile="tmp.5" --method=$METHOD --minSgRNA=$MINSGRNA
-./bin/rra.R --inFile="tmp.4.hres" --outFile="tmp.5.hres" --method=$METHOD --minSgRNA=$MINSGRNA
+./bin/rra.R --inFile="tmp.4" --outFile="tmp.5" --method=$METHOD
+./bin/rra.R --inFile="tmp.4.hres" --outFile="tmp.5.hres" --method=$METHOD
 # convert and filter pvalues of region bins to signals. 
 regionSignal="$OUTDIR/$PREFIX.region.bedgraph"
 regionSignalHres="$OUTDIR/$PREFIX.region.hres.bedgraph"

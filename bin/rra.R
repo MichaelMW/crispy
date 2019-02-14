@@ -42,6 +42,7 @@ if(is.null(argsL$method)) {
 
 
 ############### parameters for debug #############
+# library(RobustRankAggreg)
 # setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 # inFile = "../tmp.4"
 # method = "RRA"
