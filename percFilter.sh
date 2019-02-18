@@ -39,13 +39,13 @@ regionSignal="$OUTDIR/$PREFIX.peak.bedgraph"
 
 ## derived output file
 mkdir -p "$OUTDIR.percFilter"
-regionStats="$OUTDIR.percFilter/$PREFIX.regionStats.$percCut.bedgraph"
+regionStats="$OUTDIR.percFilter/$PREFIX.regionStats.$percCut.tsv"
 goodRegion="$OUTDIR.percFilter/$PREFIX.goodRegion.$percCut.bed"
-goodRegionSignal="$OUTDIR.percFilter/$PREFIX.goodPeak.$percCut.bed"
+goodRegionSignal="$OUTDIR.percFilter/$PREFIX.goodPeak.$percCut.bedgraph"
 
 ## put sgRNA in region
-intersectBed -a $INREGION -b $sgrnaSignal -wa -wb | ./bin/collapseBed -c 7 -o len | awk '{print $1"_"$2"_"$3"\t"$4}' | sort > percFilter.tmp.nPos
-intersectBed -a $INREGION -b $sgrnaSignalAll -wa -wb | ./bin/collapseBed -c 7 -o len | awk '{print $1"_"$2"_"$3"\t"$4}' | sort > percFilter.tmp.nAll
+intersectBed -a $INREGION -b $sgrnaSignal -wa -wb | ./bin/collapseBed -c 7 -o len -q | awk '{print $1"_"$2"_"$3"\t"$4}' | sort > percFilter.tmp.nPos
+intersectBed -a $INREGION -b $sgrnaSignalAll -wa -wb | ./bin/collapseBed -c 7 -o len -q | awk '{print $1"_"$2"_"$3"\t"$4}' | sort > percFilter.tmp.nAll
 
 ## get stats for each region
 ## output locus, nPos, nAll, nPos/nAll > $regionStats
