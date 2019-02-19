@@ -12,16 +12,16 @@
 
 
 ######## here is a demo 
-## use sin3A, no qnorm as example. 
+## use sin3A, with qnorm as example. 
 
-INREAD="demos/d4.SIN3A/reads.tsv"
-INREGION="demos/d4.SIN3A/regions.bed"
-INSGRNA="demos/d4.SIN3A/oligos.tsv"
-DIR="results.sin3a"
+INREAD="demos/d7.sin3a.2/sin3a_ipsc_reads_3L_3R_12262018.tsv"
+INREGION="demos/d7.sin3a.2/sin3a_regions.bed"
+INSGRNA="demos/d7.sin3a.2/sin3a_oligos.tsv"
+DIR="results.sin3a.qnorm"
 
 ############## mcherry
 ####### run Crispy
-PREFIX="M"
+PREFIX="M.q"
 ./crispy.sh -i $INREAD \
             -r $INREGION \
             -s $INSGRNA \
@@ -29,6 +29,7 @@ PREFIX="M"
             -p $PREFIX \
             -b "XR029,XR034" \
             -f "XR032,XR037" \
+			-q "XR029,XR034;XR030,XR035;XR032,XR037,XR031,XR036" \
            	-n 1
 
 ####### run fc filter
@@ -43,7 +44,7 @@ fcPvalCut=0.5
 
 ############### GFP
 ####### run Crispy
-PREFIX="G"
+PREFIX="G.q"
 ./crispy.sh -i $INREAD \
             -r $INREGION \
             -s $INSGRNA \
@@ -51,6 +52,7 @@ PREFIX="G"
             -p $PREFIX \
             -b "XR029,XR034" \
             -f "XR031,XR036" \
+			-q "XR029,XR034;XR030,XR035;XR032,XR037,XR031,XR036" \
            	-n 1
 
 ####### run fc filter
@@ -65,7 +67,7 @@ fcPvalCut=0.5
 
 ############## mcherry + GFP
 ####### run Crispy
-PREFIX="MG"
+PREFIX="MG.q"
 ./crispy.sh -i $INREAD \
             -r $INREGION \
             -s $INSGRNA \
@@ -73,6 +75,7 @@ PREFIX="MG"
             -p $PREFIX \
             -b "XR029,XR034" \
             -f "XR031,XR036,XR032,XR037" \
+			-q "XR029,XR034;XR030,XR035;XR032,XR037,XR031,XR036" \
            	-n 1
 
 ####### run fc filter
