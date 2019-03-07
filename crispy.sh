@@ -27,7 +27,7 @@ FCLIMIT=-0.5
 SGRNAKW="test"  ## keywords used to grep from sgRNA for the designed ones. 
 
 ## Get arguments
-while getopts ":i:r:s:o:p:b:f:q:t:u:v:e:n:d:m:a:c:l" opt;
+while getopts ":i:r:s:o:p:b:f:q:t:u:v:e:n:d:m:a:c:l:" opt;
 do
 	case "$opt" in
 		i) INREAD=$OPTARG;; 	# input read number for each sgRNA. (id name should match $INSGRNA)
@@ -91,6 +91,9 @@ awk '{print $4"\t"$1"_"$2"_"$3}' $INSGRNA > tmp.2.fc
 tail -n+2 $INSGRNA | ./bin/overlap2cont.py > tmp.4.fc
 # mean signal in region
 intersectBed -a tmp.4.fc -b tmp.3.fc -wa -wb | ./bin/collapseBed -c 7 -o "mean" -q  > $fcSignal
+## append fcSignal in input regions. 
+#fcSignalRegion="$OUTDIR/$PREFIX.fc_byRegion.bedgraph"
+#intersectBed -a $INREGION -b tmp.3.fc -wa -wb | ./bin/collapseBed -c 7 -o "mean" -q  > $fcSignalRegion
 
 ## all sgRNA pvalue
 tail -n+2 $pvalTsv | awk -v kw=$SGRNAKW -v OFS="\t" '{if($NF==kw){print $1, -log($5)*(($2>0)-0.5)*2}}' > tmp.1.all
