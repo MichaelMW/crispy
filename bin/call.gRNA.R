@@ -7,9 +7,7 @@ if(!("ggplot2" %in% insPacs)) install.packages("ggplot2", repos = "http://cran.u
 if(!("gridExtra" %in% insPacs)) install.packages("gridExtra", repos = "http://cran.us.r-project.org")
 if(!("preprocessCore" %in% insPacs)) install.packages("preprocessCore", repos = "http://cran.us.r-project.org")
 if(!("ggfortify" %in% insPacs)) install.packages("ggfortify", repos = "http://cran.us.r-project.org")
-if(!("edgeR" %in% insPacs)){
-  source("https://bioconductor.org/biocLite.R")
-  biocLite("edgeR")}
+if(!("edgeR" %in% insPacs)){source("https://bioconductor.org/biocLite.R"); biocLite("edgeR")}
 
 library(preprocessCore)
 library(statmod)
@@ -68,7 +66,6 @@ qnorm = as.character(argsL$qnorm)
 min_cpm = as.numeric(argsL$min_cpm)
 min_cpm_ratio = as.numeric(argsL$min_cpm_ratio)
 pvalCut = as.numeric(argsL$pvalCut)
-postPvalMode = as.character(argsL$postPvalMode)
 direction = as.numeric(argsL$direction)
 plotFormat = as.character(argsL$plotFormat)
 outDir=argsL$outDir
@@ -80,7 +77,8 @@ message = paste0("using infile = ", inFile, "\n",
                "prefix = ", prefix, "\n",
                "qnorm = ", qnorm,"\n",
                "min_cpm = ",min_cpm,"\n",
-               "min_cpm_ratio = ",min_cpm_ratio,"\n")
+               "min_cpm_ratio = ",min_cpm_ratio,"\n",
+               "direction = " , direction, "\n")
 cat(message)
 
 ####################### debug input start from here. #######################
@@ -253,15 +251,18 @@ if(hasRep==1){
   results <- glmLRT(fit)
 }
 
-tab = cbind(results$table, status)
+## get and output results to table. 
+FDR = p.adjust(results$table$PValue, method="fdr")
+tab = data.frame(results$table, FDR = FDR, status = status)
 rownames(tab) = dat.filtered[,1]
 tab = tab[order(tab$PValue),]  # sort by pval
 
-## preview and output
+## preview top results. 
 cat("preview top results:\n")
-topTags(results)
+tabShow = format(tab,digits =3)
+head(tabShow, 10)
 outTsv=paste0(outDir, "/", paste0(prefix, ".sgRNA.tsv"))
-write.table(format(tab,digits =4), file=outTsv, quote=FALSE, sep='\t')
+write.table(tabShow, file=outTsv, quote=FALSE, sep='\t')
 
 ## plotting QC
 # highlight postive sgRNA with pvalue < cutoff. 
@@ -273,9 +274,13 @@ if(pvalCut > 0){
     posSgrnaMsg = paste0("Enriched sgRNA p < ", pvalCut)
   }
   # only negative FC
-  if(direction == -1){
+  else if(direction == -1){
     filteredIdx = (tab$PValue < pvalCut & tab$status==testLabel & tab$logFC<0)
     posSgrnaMsg = paste0("Depleted sgRNA p < ", pvalCut)
+  }
+  else{
+    filteredIdx = (tab$PValue < pvalCut & tab$status==testLabel)
+    posSgrnaMsg = paste0("Both sgRNA p < ", pvalCut)
   }
   tab[filteredIdx, "status"] = posSgrnaMsg
 }
@@ -304,18 +309,6 @@ pvalDistro <- ggplot(tab_pvals, aes(x=status, y=-log10(PValue))) +
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         panel.background = element_rect(fill = "white",colour = "black"))
-
-# ## plot pval distribution to guide FC cutoff choice. WIP
-# fcDistro <- ggplot(tab_pvals, aes(x=status, y=logFC)) + 
-#   geom_violin() +
-#   geom_boxplot(width = 0.1) +
-#   xlab("sgRNA group") +
-#   ylab("log(FC)") +
-#   scale_y_continuous(breaks=seq(floor(min(tab_pvals$logFC)),max(tab_pvals$logFC),1)) +
-#   theme(panel.grid.major.y = element_line(colour = "black", linetype = "dashed"),
-#         panel.grid.major.x = element_blank(),
-#         panel.grid.minor.x = element_blank(),
-#         panel.background = element_rect(fill = "white",colour = "black"))
 
 ## add pvalue cutoffs guided by FDR in qcutoffs ##
 ## convert qvalue cutoff to the highest pvalue that satifies.
