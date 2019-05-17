@@ -262,6 +262,7 @@ tab = tab[order(tab$PValue),]  # sort by pval
 ## preview top results. 
 cat("preview top results:\n")
 tabShow = format(tab,digits =3)
+tabBak = tab  # original tab, without the positive status. 
 head(tabShow, 10)
 outTsv=paste0(outDir, "/", paste0(prefix, ".sgRNA.tsv"))
 write.table(tabShow, file=outTsv, quote=FALSE, sep='\t')
@@ -333,7 +334,7 @@ qval2pval <- function(qcutoffs, pvals, status, testLabel, negLabel){
   }
   return(df.q2p)
 }
-msg = qval2pval(qcutoffs, as.numeric(tabShow$PValue), tabShow$status, testLabel, negLabel)
+msg = qval2pval(qcutoffs, as.numeric(tabBak$PValue), tabBak$status, testLabel, negLabel)
 q2pGuideTab = tableGrob(msg, rows = NULL)  
 
 ## output all figures to file
