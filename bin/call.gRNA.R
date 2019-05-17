@@ -90,6 +90,8 @@ cat(message)
 # qnorm = 0
 # min_cpm = 5
 # min_cpm_ratio = 0.5
+# pvalCut = 0.01
+# direction = 1
 # 
 #debug2
 # setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -331,7 +333,7 @@ qval2pval <- function(qcutoffs, pvals, status, testLabel, negLabel){
   }
   return(df.q2p)
 }
-msg = qval2pval(qcutoffs, tab$PValue, tab$status, testLabel, negLabel)
+msg = qval2pval(qcutoffs, tabShow$PValue, tabShow$status, testLabel, negLabel)
 q2pGuideTab = tableGrob(msg, rows = NULL)  
 
 ## output all figures to file
