@@ -105,7 +105,7 @@ cat(message)
 ### hardcoded parameter
 negLabel = "negative"
 testLabel = "test"
-qcutoffs = c(0, 0.001, 0.005, 0.01, 0.05, 0.1) # pvalue guidelines help to aim at these qcutoffs.
+qcutoffs = c(0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1) # pvalue guidelines help to aim at these qcutoffs.
 
 ### read data. 
 dat = read.table(inFile, header = T)
@@ -328,7 +328,8 @@ qval2pval <- function(qcutoffs, pvals, status, testLabel, negLabel){
   df.q2p = data.frame()
   for(qcutoff in qcutoffs){
     pcutoff = dfm[max(idx[dfm$FDR <= qcutoff]),]$pval
-    pcutoff = round(pcutoff,5)
+    #pcutoff = round(pcutoff,5)
+    pcutoff = formatC(pcutoff, format = "e")
     df.q2p = rbind(df.q2p, data.frame(qcutoff = qcutoff,
                                       pcutoff = pcutoff))
   }
