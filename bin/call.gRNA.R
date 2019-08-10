@@ -244,7 +244,7 @@ design = model.matrix(~group)
 reads = dat.filtered[,c(fgs,bgs)]
 dlist = DGEList(as.matrix(reads))
 if(hasRep==1){
-  d = estimateDisp(calcNormFactors(dlist), design)
+  d = estimateDisp(calcNormFactors(dlist, method="TMM"), design)
   fit = glmQLFit(d, design, robust=TRUE)
   results = glmQLFTest(fit)
 }else{
