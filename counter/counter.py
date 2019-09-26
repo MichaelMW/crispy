@@ -88,9 +88,7 @@ for seq in stdin.readlines():
 	if hit:
 		#stderr.write(hit + "\n")
 		match = hit.group()
-		#print(match)
 		matchSeq = match[len(flank1):len(match)-len(flank2)]
-		#print(matchSeq)
 		hitc += 1
 		# this step checks if the sequence is actually in the original gRNA design
 		if exact: # very fast
@@ -102,16 +100,28 @@ for seq in stdin.readlines():
 					hits.append(sgRNAseq)
 					continue
 			#stderr.write(sgRNAseq + "\n")
-	
+
 ### count
 from collections import Counter
 hitCounts = Counter(hits)
 
+print(hitCounts)
+
 ### print
-for gid in gids:
-	sgRNAseq = gid2bar[gid]
-	if sgRNAseq in hitCounts.keys():
-		print("\t".join([gid, str(hitCounts[sgRNAseq])]))
+if rc == "1":
+	for gid in gids:
+		sgRNAseq = gid2bar[gid]
+		if func_rc(sgRNAseq) in hitCounts:
+			print("\t".join([gid, str(hitCounts[func_rc(sgRNAseq)])]))
+elif rc == "0":
+	for gid in gids:
+		sgRNAseq = gid2bar[gid]
+		if sgRNAseq in hitCounts:
+			print("\t".join([gid, str(hitCounts[sgRNAseq])]))
+else:
+	print("rc mode unknown, exit")
+	exit
+
 
 stderr.write("total read count: " + str(readc)+"\n")
 stderr.write("total read match (pattern): " + str(hitc)+"\n")
