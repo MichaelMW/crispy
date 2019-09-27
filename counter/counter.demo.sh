@@ -14,9 +14,9 @@
 ## for FMR1, the reads are paired. Use this:
 
 inFile="demo1.fq.gz"
-zcat $inFile| awk 'NR%4==2' | ./counter.py -f1 "GTTT" -f2 "GTTT" -i oligos.tsv 
+zcat < $inFile| awk 'NR%4==2' | ./counter.py -f1 "GTTT" -f2 "GTTT" -i oligos.tsv 
 
 inFile="demo2.fq.gz"
-zcat $inFile| awk 'NR%4==2' | ./counter.py -f1 "CACC" -f2 "GTTT" -i oligos.tsv -S 7 -R 1
+zcat < $inFile| awk 'NR%4==2' | ./counter.py -f1 "CACC" -f2 "GTTT" -i oligos.tsv -S 7 -R 1
 
 
