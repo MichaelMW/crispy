@@ -93,7 +93,9 @@ for seq in stdin.readlines():
 		# this step checks if the sequence is actually in the original gRNA design
 		if exact: # very fast
 			if matchSeq in sgRNAseqs:
-				hits.append(sgRNAseq)
+				if rc == "1":
+					matchSeq = func_rc(matchSeq)
+				hits.append(matchSeq)
 		else: # very slow
 			for sgRNAseq in sgRNAseqs:
 				if sgRNAseq in matchSeq:
@@ -105,7 +107,7 @@ for seq in stdin.readlines():
 from collections import Counter
 hitCounts = Counter(hits)
 
-print(hitCounts)
+#print(hitCounts)
 
 ### print
 if rc == "1":
