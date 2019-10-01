@@ -62,6 +62,7 @@ with open(inFile) as f:
 
 
 sgRNAseqs = set(gid2bar.values())
+totalSgRNA = len(sgRNAseqs)
 blens = [len(sgRNAseq) for sgRNAseq in sgRNAseqs]
 maxbl, minbl = max(blens), min(blens)
 
@@ -106,26 +107,35 @@ for seq in stdin.readlines():
 ### count
 from collections import Counter
 hitCounts = Counter(hits)
-
+matchedSgRNA = len(hitCounts)
 #print(hitCounts)
 
 ### print
-if rc == "1":
-	for gid in gids:
-		sgRNAseq = gid2bar[gid]
-		if func_rc(sgRNAseq) in hitCounts:
-			print("\t".join([gid, str(hitCounts[func_rc(sgRNAseq)])]))
-elif rc == "0":
-	for gid in gids:
-		sgRNAseq = gid2bar[gid]
-		if sgRNAseq in hitCounts:
-			print("\t".join([gid, str(hitCounts[sgRNAseq])]))
-else:
-	print("rc mode unknown, exit")
-	exit
+#if rc == "1":
+#	for gid in gids:
+#		sgRNAseq = gid2bar[gid]
+#		if func_rc(sgRNAseq) in hitCounts:
+#			print("\t".join([gid, str(hitCounts[func_rc(sgRNAseq)])]))
+#elif rc == "0":
+#	for gid in gids:
+#		sgRNAseq = gid2bar[gid]
+#		if sgRNAseq in hitCounts:
+#			print("\t".join([gid, str(hitCounts[sgRNAseq])]))
+#else:
+#	print("rc mode unknown, exit")
+#	exit
 
+for gid in gids:
+	sgRNAseq = gid2bar[gid]
+	if rc=="1":
+		sgRNAseq = func_rc(sgRNAseq)
+	hitVal = hitCounts.get(sgRNAseq, 0)
+	hitStr = str(hitVal)
+	print("\t".join([gid, hitStr]))
 
 stderr.write("total read count: " + str(readc)+"\n")
 stderr.write("total read match (pattern): " + str(hitc)+"\n")
 stderr.write("total exact match (sgRNA): " + str(len(hits))+"\n")
+stderr.write("sgRNA with matches: {} / {}".format(matchedSgRNA, totalSgRNA) + "\n")
+
 
