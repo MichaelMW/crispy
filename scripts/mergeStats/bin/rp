@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+# replace inFile1 with dictionary built from inFile2
+
+# todo, input pattern for delimiter as argv.
+# eg sep = '\(|\)|\+|\s+'  #, from argv[3]  # the rule is sep by "|"
+
+
+import re
+from sys import argv, stdin
+from signal import signal, SIGPIPE, SIG_DFL
+signal(SIGPIPE, SIG_DFL)
+
+
+inFile1, inFile2 = argv[1], argv[2]
+
+
+## dict. inFile2
+# delimiter
+try:
+    sep = argv[3]  # eg ';|,'
+except IndexError:
+    sep = r'(\s+)'
+
+if inFile2 == "-":
+    data = stdin.read()
+else:
+    with open(inFile2) as f:
+        data = f.read()
+Dict = {l.strip().split()[0]: l.strip().split()[1]
+        for l in data.strip().split("\n")}
+
+# file to be replaced. inFile1
+if inFile1 == "-":
+    data = stdin.read()
+else:
+    with open(inFile1) as f:
+        data = f.read()
+for l in data.strip().split("\n"):
+    #ls = l.strip().split("\t")
+    ls = re.split(sep, l.strip())
+    print("".join([Dict.get(e, e) for e in ls]))

@@ -1,0 +1,113 @@
+#!/usr/bin/env python
+from signal import signal, SIGPIPE, SIG_DFL
+from sys import stdin, stderr, argv
+from collections import defaultdict
+import argparse
+#from statistics import mean, median, stdev
+
+# emulates mergeBed, -o -c, but entry can be overlapping, but not identical; default use first 3 cols as entry loci. but can use other combinations. (eg. collapsebed -e 1,2,3,6); can be single loci.
+
+# input bedformat file from stdin, output to stdin
+
+
+signal(SIGPIPE, SIG_DFL)
+
+# parse args
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--inBed", help="input bedfile")
+parser.add_argument("-q", "--quiet", action='store_true', help="suppress messages")
+parser.add_argument("-e", "--entrycolumn",
+                    help="Specify columns from the input file to use as entry, default is 1,2,3 as in bedfile")
+parser.add_argument("-c", "--column",
+                    help="Specify columns from the input file to operate upon.")
+parser.add_argument("-o", "--operation",
+                    help="Specify the operation that should be applied to -c. eg. list, set, len; sum, min, max, mean")
+                    #help="Specify the operation that should be applied to -c. eg. list, set, len; sum, min, max, mean, median, stdev")
+parser.add_argument("-E", "--eval", action='store_true',
+                    help="flag eval mode for input args of entrycolumn, column and operation, eg. collapseBed -E -e '[1,2,3]' -c 'list(range(11,20)+[50])' -o '['mean']*10' ")
+args = parser.parse_args()
+
+## simple statistics functions
+def mean(l):
+	return sum(map(float, l))/len(l)
+
+# parse range args
+# eg. "1,2,3" -> [1,2,3]
+# eg. "1-15,18,20-31" -> [1,2,3 .. 15, 18, 20...31]
+# eg. 'list(range(11,20)+[50])' if eval_flag is on
+def parseRange(s, eval_flag, is_int=True):
+    if eval_flag:
+        ls = eval(s)
+        return ls
+    if is_int == True:
+        ls = []
+        parts = s.split(",")
+        for part in parts:
+            if "-" in part:
+                a, b = part.split("-")
+                l = range(int(a), int(b)+1)
+                ls += l
+            else:
+                ls.append(int(part))
+        return ls
+    else:
+        return s.split(",")
+
+
+# check args:
+if args.column:
+    cols = parseRange(args.column, eval_flag=args.eval)
+else:
+    cols = [4]
+if args.operation:
+    methods = parseRange(args.operation, eval_flag=args.eval, is_int=False)
+else:
+    methods = ["list"]
+if len(methods) != len(cols):
+    stderr.write("len(methods)!=len(cols)! Exit\n")
+    exit()
+if args.entrycolumn:
+    ecols = parseRange(args.entrycolumn, eval_flag=args.eval)
+else:
+    ecols = [1, 2, 3]
+
+# print(args)
+if not args.quiet:
+	stderr.write("entry columns: {}\noperation columns:{}\nmethods:{}\n".format(
+    ecols, cols, methods))
+
+data = defaultdict(list)
+# specified input
+if args.inBed:
+    inFile = args.inBed
+    with open(inFile) as f:
+        lines = f.readlines()
+# from pipe
+else:
+    lines = stdin.readlines()
+
+# arrange data from input
+for line in lines:
+    entry = tuple([line.split()[ecol-1] for ecol in ecols])
+    items = [line.split()[col-1] for col in cols]
+    data[entry].append(items)
+
+
+# print out values
+for entry in data.keys():
+    listsByLine = data[entry]
+    entryText = "\t".join(entry)
+    listsByCol = zip(*listsByLine)
+    lineResultList = []
+    for i, colList in enumerate(listsByCol):
+        method = methods[i]
+        try:  # if method doesn't concern float, like list, len, or set.
+            colResult = eval("{}(colList)".format(method))
+        except TypeError:
+            colResult = eval("{}(map(float,colList))".format(method))
+        if type(colResult) == list or type(colResult) == set:
+            colResultText = ",".join(list(colResult))
+        else:
+            colResultText = str(colResult)
+        lineResultList.append(colResultText)
+    print("{}\t{}".format(entryText, "\t".join(lineResultList)))
