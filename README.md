@@ -28,7 +28,7 @@ A lightweight versatile pipeline for crispr-screening analysis.
 
 ## history
 * v1.5.0:
-        * included scripts used to merge statistics in preparation for the manuscript. 
+* 	included scripts used to merge statistics in preparation for the manuscript. 
 * v1.4.2:
 	* included a "fc.bedgraph" fold change track in the output. This is the track for high resolution mean fold change.
 	* included a "region.hres.bedgraph" track in the output. This is the track for high resolution RRA signal.
